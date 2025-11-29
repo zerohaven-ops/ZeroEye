@@ -35,7 +35,8 @@ Smart Templates: Eid, Ramadan, Free Data (Jazz/Zong/STC).
 
 Clone the repository:
 
-git clone [https://github.com/YourRepo/ZeroEye.git](https://github.com/YourRepo/ZeroEye.git)
+git clone https://github.com/zerohaven-ops/ZeroEye 
+
 cd ZeroEye
 
 
