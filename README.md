@@ -100,7 +100,6 @@ python3 zeroeye.py          # Recommended - auto venv
 ./start.sh                  # Alternative method
 
 5. If you face any error then remove the tool with
-Complete removal
 sudo rm -rf ZeroEye
 Then Install Again with Steps Given Above
 
