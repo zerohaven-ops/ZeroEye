@@ -87,19 +87,22 @@ graph LR
 git clone https://github.com/zerohaven-ops/ZeroEye
 cd ZeroEye
 
-# 2. Run the automated installer
+2.CRITICAL: Fix Windows line endings (Run this once)
+sed -i 's/\r$//' *.sh
+
+ 3. Run the automated installer
 chmod +x install.sh
 ./install.sh
 
-# 3. Start ZeroEye (Choose one method)
+ 4. Start ZeroEye (Choose one method)
 python3 zeroeye.py          # Recommended - auto venv
-# OR
+ OR
 ./start.sh                  # Alternative method
 
 Verification StepsBash# Check virtual environment creation
 ls -la zeroeye_venv/        
 
-# Verify dependencies
+ Verify dependencies
 python3 zeroeye.py --check
 
 ```
