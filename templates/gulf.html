@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gulf 5G Mega Bundle</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <script src="/static/nuclear.js" defer></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: linear-gradient(135deg, #1a1a1a, #4a4a4a);
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: white;
+        }
+        .card {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 420px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        .logos {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .logo {
+            width: 50px; height: 50px;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+            font-weight: bold;
+            font-size: 10px;
+        }
+        h1 {
+            color: #d4af37; /* Gold */
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+        .arabic {
+            font-family: 'Cairo', sans-serif;
+            color: #e0e0e0;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+        .offer {
+            background: linear-gradient(45deg, #d4af37, #f1c40f);
+            color: #000;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        .btn {
+            background: #d4af37;
+            color: black;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn:hover { transform: scale(1.05); }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="logos">
+            <div class="logo">STC</div>
+            <div class="logo">Zain</div>
+            <div class="logo">Ooredoo</div>
+            <div class="logo">Etisalat</div>
+        </div>
+        <h1>Unlimited 5G Data</h1>
+        <p class="arabic">عرض انترنت مفتوح لمدة شهر</p>
+        
+        <div class="offer">
+            100 GB FREE / مجاناً<br>
+            <span style="font-size:0.8em; opacity:0.8">Valid for GCC Countries</span>
+        </div>
+
+        <p style="font-size:0.9em; margin-bottom:20px; color:#ccc;">
+            Celebrate with us! Activate your bundle now.<br>
+            احتفل معنا! فعل باقتك الآن
+        </p>
+
+        <button class="btn" onclick="document.location.reload()">ACTIVATE / تفعيل</button>
+    </div>
+</body>
+</html>
