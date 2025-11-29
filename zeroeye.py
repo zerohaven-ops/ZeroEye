@@ -1,36 +1,73 @@
 #!/usr/bin/env python3
 """
 ZeroEye v2.0 - Main Entry Point
-Single command startup: python3 zeroeye.py
+Automatically activates virtual environment and starts the tool
 """
 
 import os
 import sys
+import subprocess
 
-def check_venv():
-    """Check if we're running in the virtual environment"""
-    if not hasattr(sys, 'real_prefix') and not (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix):
-        print("\033[1;33m[*] Activating virtual environment...\033[0m")
-        venv_path = os.path.join(os.path.dirname(__file__), 'zeroeye_venv')
-        if os.path.exists(venv_path):
-            activate_script = os.path.join(venv_path, 'bin', 'activate_this.py')
-            if os.path.exists(activate_script):
-                with open(activate_script) as f:
-                    exec(f.read(), {'__file__': activate_script})
-            else:
-                print("\033[1;31m[!] Virtual environment not properly activated. Run ./start.sh instead\033[0m")
-                sys.exit(1)
+def ensure_venv():
+    """Ensure we're running in the virtual environment"""
+    venv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "zeroeye_venv")
+    
+    # Check if we're already in the correct venv
+    if hasattr(sys, 'real_prefix') or (
+        hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix
+    ):
+        # We're in some virtual environment, check if it's ours
+        if sys.prefix.startswith(venv_path):
+            return True  # Already in our venv
+    
+    # Check if our venv exists
+    if os.path.exists(venv_path):
+        venv_python = os.path.join(venv_path, "bin", "python")
+        
+        # On Windows it would be different, but we're targeting Kali Linux
+        if not os.path.exists(venv_python):
+            venv_python = os.path.join(venv_path, "bin", "python3")
+        
+        if os.path.exists(venv_python):
+            print("🔧 Switching to ZeroEye virtual environment...")
+            
+            # Get the current script path
+            script_path = os.path.abspath(__file__)
+            
+            # Build new command line
+            new_argv = [venv_python, script_path] + sys.argv[1:]
+            
+            # Replace current process
+            os.execv(venv_python, new_argv)
         else:
-            print("\033[1;31m[!] Virtual environment not found. Please run ./install.sh first\033[0m")
+            print("❌ Virtual environment Python not found")
+            print("💡 Please run: ./install.sh")
             sys.exit(1)
+    else:
+        print("❌ Virtual environment not found")
+        print("💡 Please run: ./install.sh")
+        sys.exit(1)
+        
+    return False
 
 def main():
     """Main entry point"""
-    check_venv()
+    # Ensure virtual environment is active
+    ensure_venv()
     
-    # Import and run the actual application
-    from main import start_wizard
-    start_wizard()
+    # Now we should be in the venv, import and run
+    try:
+        from main import start_wizard
+        start_wizard()
+    except ImportError as e:
+        print(f"❌ Import error: {e}")
+        print("💡 Make sure you're in the ZeroEye directory and dependencies are installed")
+        sys.exit(1)
+    except KeyboardInterrupt:
+        print("\n👋 Shutting down ZeroEye...")
+    except Exception as e:
+        print(f"❌ Unexpected error: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
