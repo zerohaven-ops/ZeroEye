@@ -83,7 +83,7 @@ graph LR
 #  Step-by-Step Installation
 ```
 1. Clone the repository
-git clone [https://github.com/zerohaven-ops/ZeroEye](https://github.com/zerohaven-ops/ZeroEye)
+git clone https://github.com/zerohaven-ops/ZeroEye
 cd ZeroEye
 
 # 2. Run the automated installer
