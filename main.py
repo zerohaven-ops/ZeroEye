@@ -270,7 +270,10 @@ def start_wizard():
     templates = {
         "1": ("🎁 Free Data", "free_data"),
         "2": ("🌙 Eid Gift", "eid"), 
-        "3": ("🕌 Ramadan", "ramadan")
+        "3": ("🕌 Ramadan", "ramadan"),
+        "4": ("🌍 Gulf Countries Bundle", "gulf"),
+        "5": ("💳 International Rewards", "rewards"),
+        "6": ("📦 Global Tracking", "tracking")
     }
     
     for key, (name, _) in templates.items():
