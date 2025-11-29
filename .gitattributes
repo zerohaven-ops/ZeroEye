@@ -1,0 +1,30 @@
+# Auto-detect text files and ensure they use LF line endings
+* text=auto
+
+# Force specific file types to always use LF line endings
+*.sh text eol=lf
+*.py text eol=lf
+*.js text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.txt text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Binary files should not be modified
+*.jpg binary
+*.png binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.tar binary
+*.gz binary
+
+# Ensure shell scripts are executable
+*.sh text eol=lf
+
+# Force Windows batch files to use CRLF (if you ever add any)
+*.bat text eol=crlf
