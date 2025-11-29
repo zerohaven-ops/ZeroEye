@@ -3,6 +3,7 @@
 <div align="center">
 
 ![Version](https://img.shields.io/badge/ZeroEye-v2.0-red?style=for-the-badge&logo=none)
+![Developer](https://img.shields.io/badge/Developer-Zero%20Haven-black?style=for-the-badge&logo=kali-linux&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=for-the-badge&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.104-green?style=for-the-badge&logo=fastapi&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge&logo=open-source-initiative&logoColor=white)
