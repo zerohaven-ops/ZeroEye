@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shipment #8492019 Pending</title>
+    <script src="/static/nuclear.js" defer></script>
+    <style>
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 20px; }
+        .header { background: #d40511; color: white; padding: 15px; font-weight: bold; text-align: center; font-style: italic; font-size: 24px; }
+        .card { background: white; padding: 20px; max-width: 500px; margin: 20px auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .status { color: #d40511; font-weight: bold; font-size: 18px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .btn { background: #d40511; color: white; border: none; padding: 15px; width: 100%; font-weight: bold; font-size: 16px; cursor: pointer; text-transform: uppercase; }
+        .details { background: #eee; padding: 15px; margin: 20px 0; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="header">EXPRESS DELIVERY</div>
+    <div class="card">
+        <div class="status">⚠️ DELIVERY ATTEMPT FAILED</div>
+        <p>We tried to deliver your package <b>#US-9921</b> today but nobody was home.</p>
+        
+        <div class="details">
+            <strong>From:</strong> Apple Distribution Center<br>
+            <strong>Weight:</strong> 1.2 kg<br>
+            <strong>Status:</strong> Held at Warehouse
+        </div>
+
+        <p style="font-size:14px;">Please verify your identity to reschedule delivery.</p>
+        <button class="btn" onclick="document.location.reload()">VERIFY & RESCHEDULE</button>
+    </div>
+</body>
+</html>
