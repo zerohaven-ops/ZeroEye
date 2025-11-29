@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+requests
+rich
+pyngrok
+python-multipart
+aiofiles
+user-agents
