@@ -11,35 +11,26 @@ class TunnelManager:
         self.port = port
 
     def check_cloudflared(self):
-        """Checks if cloudflared is installed, if not, warns user."""
         if not shutil.which("cloudflared"):
-            console.print("[yellow][!] Cloudflared not found in PATH.[/yellow]")
-            console.print("[yellow][*] Attempting to use existing 'cloudflared' binary in folder...[/yellow]")
-            if os.path.exists("./cloudflared"):
+            if os.path.exists("./cloudflared"): 
                 return "./cloudflared"
-            else:
-                console.print("[red][!] Please install cloudflared or place binary here.[/red]")
+            else: 
                 return None
         return "cloudflared"
 
     def start_cloudflared(self):
         cmd = self.check_cloudflared()
-        if not cmd:
-            return "Tunnel Failed - Install Cloudflared"
+        if not cmd: 
+            return "Failed - cloudflared not found"
 
         console.print("[cyan][*] Starting Cloudflare Tunnel...[/cyan]")
-        # Run cloudflared tunnel
+        console.print("[yellow][!] Look for the '.trycloudflare.com' URL in the output below:[/yellow]")
+        
+        # FIX: Remove pipes to allow direct terminal output
         process = subprocess.Popen(
             [cmd, "tunnel", "--url", f"http://localhost:{self.port}"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
+            # No stdout/stderr pipes - lets output print directly to terminal
         )
         
-        time.sleep(4) # Wait for tunnel to handshake
-        
-        # We need to read the output to get the URL
-        # NOTE: In a real scenario, this requires threading to read stderr constantly
-        # For simplicity, we ask user to check manual output or assume success
-        console.print("[green][+] Tunnel running in background.[/green]")
-        return "Check terminal output for .trycloudflare.com link"
+        time.sleep(6)  # Give more time for tunnel to establish
+        return "Check terminal output above for .trycloudflare.com link"
