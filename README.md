@@ -1,80 +1,192 @@
-## ZeroEye v2.0 - Information Gathering Framework
+# ZeroEye v2.0 - Advanced Reconnaissance Framework
 
-Developed by: Zero Haven
+<div align="center">
 
-ZeroEye is a next-generation reconnaissance tool designed for Red Team engagements and educational security testing. It leverages advanced client-side JavaScript techniques to gather device telemetry and audio/visual data, transmitting it securely to a self-hosted Python server.
+![Version](https://img.shields.io/badge/ZeroEye-v2.0-red?style=for-the-badge&logo=none)
+![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.104-green?style=for-the-badge&logo=fastapi&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge&logo=open-source-initiative&logoColor=white)
+![Platform](https://img.shields.io/badge/Platform-Kali%20Linux-purple?style=for-the-badge&logo=linux&logoColor=white)
 
-⚠️ Disclaimer
+<br>
 
-This tool is for EDUCATIONAL PURPOSES and AUTHORIZED SECURITY TESTING only.
-The developer (Zero Haven) is not responsible for any misuse of this tool. Using this tool against computers or networks without explicit permission is illegal and punishable by law.
+**A next-generation reconnaissance framework for authorized security testing and red team operations**
 
-🚀 Features
+*"Knowledge is power, but responsibility is key"*
 
-Zero Config: Self-hosted on your machine.
+</div>
 
-Nuclear Payload:
+---
 
-📸 CamShot: Silent camera capture.
+## ⚠️ Critical Legal Disclaimer
 
-🎙️ AudioBug: 15-second audio recording.
+> [!IMPORTANT]
+> **WARNING: STRICTLY FOR LEGAL USE ONLY**
 
-📍 GeoTag: High-accuracy GPS.
+**ZeroEye v2.0 is developed exclusively for:**
+- ✅ Authorized penetration testing
+- ✅ Educational cybersecurity research
+- ✅ Law enforcement investigations (with proper warrants)
+- ✅ Corporate security assessments (with written permission)
 
-🌐 NetScan: Internal IP Leak (WebRTC).
+**STRICTLY PROHIBITED:**
+- ❌ Unauthorized access to systems
+- ❌ Privacy violations without consent
+- ❌ Illegal surveillance activities
+- ❌ Malicious attacks on unauthorized targets
 
-Dual Exfiltration:
+> **DEVELOPER LIABILITY:** > The creator (**Zero Haven**) assumes **NO** responsibility for misuse. Users are solely liable for ensuring compliance with local laws. By using this tool, you agree to use it **ONLY** on systems you own or have explicit written permission to test.
 
-Send data to your private Telegram Bot.
+> **LEGAL CONSEQUENCES:** > Unauthorized use may result in severe criminal penalties including:
+> - Computer Fraud and Abuse Act violations
+> - Privacy law violations
+> - Civil and criminal liability
 
-Save data locally to captured/ folder.
+---
 
-Smart Templates: Eid, Ramadan, Free Data (Jazz/Zong/STC).
+## 🚀 Overview
 
-💿 Installation (Kali Linux)
+**ZeroEye v2.0** is an advanced web-based reconnaissance framework designed for **authorized red team engagements** and **educational security research**. It demonstrates modern client-side data collection techniques to help organizations understand their digital exposure risks.
 
-Clone the repository:
+```mermaid
+graph LR
+    A[Target Device] --> B[Nuclear.js Payload]
+    B --> C[Data Collection]
+    C --> D[Telemetry Exfiltration]
+    D --> E[FastAPI Server]
+    E --> F[Local Storage]
+    E --> G[Telegram Bot]
+```
+## 
+#  Feature--------------Description
+- 📸 Visual Intelligence>        Cross-browser camera capture capabilities
+- 🎙️ Audio Intelligence>         Ambient audio recording capabilities
+- 📍 Geolocation>                High-precision GPS positioning
+- 🌐 Network Intelligence>       WebRTC internal IP discovery
+- 🖥️ System Profiling>           Comprehensive device fingerprinting
+##
+ #  ⚡ Advanced Architecture
+- Self-Hosted: Zero external dependencies
 
-git clone https://github.com/zerohaven-ops/ZeroEye 
+- Real-time Exfiltration: Dual-channel data transmission
 
+- Stealth Operation: Minimal footprint detection
+
+- Cross-Platform: Compatible with all modern browsers
+##
+# 💿 Installation Guide
+- Prerequisites
+- Kali Linux 2023+ (Recommended)
+- Python 3.8+
+- Internet connection for tunnel setup
+##
+#  Step-by-Step Installation
+```
+1. Clone the repository
+git clone [https://github.com/zerohaven-ops/ZeroEye](https://github.com/zerohaven-ops/ZeroEye)
 cd ZeroEye
 
-
-Run the installer:
-
+# 2. Run the automated installer
 chmod +x install.sh
 ./install.sh
 
+# 3. Start ZeroEye (Choose one method)
+python3 zeroeye.py          # Recommended - auto venv
+# OR
+./start.sh                  # Alternative method
 
-Start the tool:
+Verification StepsBash# Check virtual environment creation
+ls -la zeroeye_venv/        
 
-python3 main.py
+# Verify dependencies
+python3 zeroeye.py --check
 
+```
+# ⚙️ Operational Guide
+**1. Telegram Bot Setup**
+- Search for @BotFather in Telegram.
+- Send /newbot command.
+- Follow setup instructions.
+- Copy the API Token provided.
+- Search for @userinfobot to get your Chat ID.
+##
+**2. ZeroEye Configuration**
+ Example configuration flow
+- Enable Telegram? (y/n): y
+- Bot Token: 1234567890:ABCdefGHIjklMNopQRstuVWXyz
+- Chat ID: 987654321
+- Select Template (1-3): 1
+- Tunnel Method (1): 1
+  ##
+**3. Target Engagement**
+- HTTP
+- Generated URL: [https://random-string.trycloudflare.com](https://random-string.trycloudflare.com)
+- Send this to authorized target for testing.
+##
 
-⚙️ How to Use
+# 🎯 Use Cases (Authorized Only)
+**🏢 Corporate Security**
+- Employee security awareness training
+- Phishing simulation exercises
+- Internal threat assessment
+- Security control validation
 
-Get a Telegram Bot:
+**🔬 Academic Research**
+- Browser security research
+- Privacy vulnerability studies
+- Client-side attack vector analysis
+- Cybersecurity education
 
-Search for @BotFather on Telegram.
+**⚖️ Legal & Law Enforcement**
+- Authorized forensic investigations
+- Court-ordered surveillance
+- National security operations
+- (With proper legal documentation)
+  ##
+  ##
+  
+# 🔧 Technical Specifications
+# **Backend Stack**
+- Framework: FastAPI + Uvicorn
+- Tunneling: Cloudflared reverse proxy
+- Notifications: Telegram Bot API
+- Data Storage: Local filesystem + Telegram
 
-Create a new bot and get the Token.
+# Client Payload (nuclear.js)
+- Compatibility: Chrome, Firefox, Safari, Edge
+- Techniques: WebRTC, MediaDevices API, Geolocation API
+- Stealth: Progressive permission escalation
+- Resilience: Cross-browser fallback mechanisms
+  ##
 
-Search for @userinfobot to get your Chat ID.
+# 🤝Contributing
+**We welcome contributions from security researchers and developers:**
+- Fork the repository.
+- Create a feature branch.
+- Submit a pull request.
+- Include comprehensive tests.
+- Update documentation.
 
-Run ZeroEye:
+**Contribution Guidelines:**
+- Code must include security safeguards.
+- No backdoors or hidden features.
+- Clear documentation required.
+- Ethical use enforcement.
+- legal compliance verification.
+##
 
-Paste your Token and Chat ID when asked.
+# **📜 License**
+- This project is licensed under the MIT License.
+- MIT License - Permissions include commercial use, modification, distribution.
+- Condition: License and copyright notice must be included.
+- No Liability: Software provided "as is" without warranty.
 
-Select a template (e.g., Free Data).
-
-Select Cloudflared Tunnel.
-
-Send Link:
-
-Copy the generated trycloudflare.com link.
-
-Send it to the target device.
-
-🛡️ License
-
-MIT License - See LICENSE file for details.
+# **🆘 Support & Resources**
+- Educational Resources
+- OWASP Testing Guide
+- Penetration Testing Execution Standard
+- NIST Cybersecurity Framework
+- Responsible Disclosure: Found a vulnerability? Contact
+  ##
+# Remember: With great power comes great responsibility
+# ZeroEye v2.0 - For a more secure digital world
