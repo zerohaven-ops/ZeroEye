@@ -54,7 +54,7 @@ else
 fi
 
 print_status "Installing system dependencies..."
-sudo apt-get install -y -qq python3 python3-pip python3-venv unzip wget curl > /dev/null 2>&1
+sudo apt-get install -y -qq python3 python3-pip python3-venv unzip wget curl ssh > /dev/null 2>&1
 if [ $? -eq 0 ]; then
     print_success "System dependencies installed"
 else
@@ -87,11 +87,26 @@ pip uninstall -y -q multipart > /dev/null 2>&1 || true
 # Install from requirements
 if [ -f "requirements.txt" ]; then
     pip install -q -r requirements.txt > /dev/null 2>&1
-    print_success "Python dependencies installed"
+    if [ $? -eq 0 ]; then
+        print_success "Python dependencies installed"
+    else
+        print_error "Failed to install from requirements.txt - installing manually"
+        pip install -q fastapi uvicorn rich python-multipart requests > /dev/null 2>&1
+        print_success "Core Python packages installed"
+    fi
 else
     print_error "requirements.txt not found - installing manually"
     pip install -q fastapi uvicorn rich python-multipart requests > /dev/null 2>&1
     print_success "Core Python packages installed"
+fi
+
+# Verify critical dependencies
+print_status "Verifying installations..."
+if python3 -c "import fastapi, uvicorn, rich, requests" > /dev/null 2>&1; then
+    print_success "Critical dependencies verified"
+else
+    print_error "Some dependencies failed to install"
+    exit 1
 fi
 
 print_status "Configuring cloudflared tunnel..."
@@ -156,6 +171,14 @@ if [ -d "zeroeye_venv" ] && [ -f "zeroeye_venv/bin/activate" ]; then
     print_success "Virtual environment verified"
 else
     print_error "Virtual environment setup incomplete"
+    exit 1
+fi
+
+# Test Python imports
+if zeroeye_venv/bin/python3 -c "import fastapi, uvicorn, rich, requests" > /dev/null 2>&1; then
+    print_success "All Python imports working"
+else
+    print_error "Python imports test failed"
     exit 1
 fi
 
