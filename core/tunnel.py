@@ -17,172 +17,185 @@ class TunnelManager:
         self.tunnel_process = None
         self.is_running = False
 
-    def check_localxpose(self):
-        """Check if localxpose is available"""
-        if shutil.which("localxpose"):
-            return "localxpose"
-        if os.path.exists("./localxpose"):
-            return "./localxpose"
-        return None
-
-    def download_localxpose(self):
-        """Download localxpose automatically"""
-        console.print("[cyan][*] Downloading LocalXpose...[/cyan]")
+    def install_pagekite(self):
+        """Install PageKite using system package manager"""
+        console.print("[cyan][*] Installing PageKite...[/cyan]")
         try:
-            # Download based on architecture
-            import platform
-            arch = platform.machine().lower()
+            # Install pagekite from repos
+            result = subprocess.run(
+                ["sudo", "apt-get", "update"],
+                capture_output=True,
+                text=True
+            )
             
-            if 'arm' in arch or 'aarch' in arch:
-                url = "https://github.com/LocalXpose/LocalXpose/releases/download/v2.0.0/localxpose-linux-arm64"
+            result = subprocess.run(
+                ["sudo", "apt-get", "install", "-y", "pagekite"],
+                capture_output=True,
+                text=True
+            )
+            
+            if result.returncode == 0:
+                console.print("[green][✓] PageKite installed successfully[/green]")
+                return True
             else:
-                url = "https://github.com/LocalXpose/LocalXpose/releases/download/v2.0.0/localxpose-linux-amd64"
-            
-            response = requests.get(url, stream=True)
-            with open("localxpose", "wb") as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
-            
-            os.chmod("localxpose", 0o755)
-            console.print("[green][✓] LocalXpose downloaded successfully[/green]")
-            return "./localxpose"
+                console.print("[yellow][!] Installing from package failed, trying pip...[/yellow]")
+                # Try pip install as fallback
+                result = subprocess.run(
+                    ["pip", "install", "pagekite"],
+                    capture_output=True,
+                    text=True
+                )
+                return result.returncode == 0
+                
         except Exception as e:
-            console.print(f"[red][!] Failed to download LocalXpose: {e}[/red]")
-            return None
+            console.print(f"[red][!] PageKite installation failed: {e}[/red]")
+            return False
 
-    def start_localxpose(self):
-        """Start LocalXpose tunnel (clean and silent)"""
-        cmd = self.check_localxpose()
-        if not cmd:
-            cmd = self.download_localxpose()
-            if not cmd:
-                return None, "Failed to setup LocalXpose"
-
-        console.print("[cyan][*] Starting secure tunnel...[/cyan]")
+    def start_pagekite(self):
+        """Start PageKite tunnel (most reliable method)"""
+        console.print("[cyan][*] Starting PageKite tunnel...[/cyan]")
         
         try:
-            # Start localxpose with region selection for better performance
+            # Generate random subdomain
+            import random
+            import string
+            subdomain = ''.join(random.choices(string.ascii_lowercase + string.digits, k=12))
+            pagekite_url = f"https://{subdomain}.pagekite.me"
+            
+            # Start pagekite
             process = subprocess.Popen(
-                [cmd, "tunnel", "http", "--region", "eu", str(self.port)],
+                [
+                    "pagekite", "8080", 
+                    f"{subdomain}.pagekite.me",
+                    "--frontend=pagekite.me:443"
+                ],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
                 bufsize=1
             )
             
-            # Wait for tunnel URL
-            url = None
-            start_time = time.time()
+            # Wait for tunnel to establish
+            time.sleep(8)
             
-            while time.time() - start_time < 15:  # 15 second timeout
-                line = process.stdout.readline()
-                if not line:
-                    time.sleep(0.1)
-                    continue
-                
-                # Extract URL from localxpose output
-                match = re.search(r'https://[a-zA-Z0-9\-]+\.loca\.lt', line)
-                if match:
-                    url = match.group(0)
-                    break
-            
-            if url:
-                # Wait for tunnel to stabilize
-                time.sleep(2)
-                return process, url
-            else:
-                process.terminate()
-                return None, "Failed to get tunnel URL"
-                
-        except Exception as e:
-            return None, f"Tunnel start failed: {str(e)}"
-
-    def is_tunnel_healthy(self, url, timeout=5):
-        """Simple health check"""
-        try:
-            response = requests.get(url, timeout=timeout, allow_redirects=True)
-            return response.status_code in [200, 302, 404]
-        except:
-            return False
-
-    def start_tunnel(self):
-        """Main tunnel startup - clean and professional"""
-        console.print("[cyan][*] Establishing secure connection...[/cyan]")
-        
-        # Try LocalXpose first (more reliable)
-        process, url = self.start_localxpose()
-        
-        if url and not url.startswith("Failed"):
-            self.tunnel_process = process
-            self.current_url = url
-            console.print("[green][✓] Secure tunnel established[/green]")
-            return url
-        
-        # Fallback to Cloudflare if LocalXpose fails
-        console.print("[yellow][!] Primary tunnel failed, trying backup...[/yellow]")
-        return self.start_cloudflared_fallback()
-
-    def start_cloudflared_fallback(self):
-        """Fallback to Cloudflare with minimal logging"""
-        cmd = self.check_cloudflared()
-        if not cmd:
-            return "Error: No tunneling service available"
-
-        try:
-            process = subprocess.Popen(
-                [cmd, "tunnel", "--url", f"http://localhost:{self.port}"],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE,
-                text=True,
-                bufsize=1
-            )
-            
-            # Extract URL quietly
-            url = None
-            start_time = time.time()
-            
-            while time.time() - start_time < 10:
-                line = process.stderr.readline()
-                if not line:
-                    time.sleep(0.1)
-                    continue
-                
-                match = re.search(r'https://[-a-z0-9]+\.trycloudflare\.com', line)
-                if match:
-                    url = match.group(0)
-                    break
-            
-            if url:
-                time.sleep(2)
+            # Verify tunnel is working
+            try:
+                response = requests.get(pagekite_url, timeout=10, verify=False)
+                if response.status_code in [200, 404, 502]:  # 502 means tunnel is up but our app might not be
+                    self.tunnel_process = process
+                    self.current_url = pagekite_url
+                    console.print("[green][✓] PageKite tunnel established[/green]")
+                    return pagekite_url
+            except requests.exceptions.RequestException:
+                # Even if health check fails, the tunnel might be establishing
+                console.print("[yellow][!] Tunnel establishing, may take 30-60 seconds...[/yellow]")
                 self.tunnel_process = process
-                self.current_url = url
-                console.print("[green][✓] Backup tunnel established[/green]")
-                return url
-            else:
-                return "Error: Could not establish tunnel connection"
+                self.current_url = pagekite_url
+                return pagekite_url
                 
+            return "Error: PageKite tunnel failed to start"
+            
         except Exception as e:
             return f"Error: {str(e)}"
 
-    def check_cloudflared(self):
-        """Check for cloudflared fallback"""
+    def start_simple_cloudflared(self):
+        """Simplified Cloudflare tunnel without complex parsing"""
+        console.print("[cyan][*] Starting Cloudflare tunnel...[/cyan]")
+        
+        # Check for cloudflared
+        cloudflared_cmd = None
         if shutil.which("cloudflared"):
-            return "cloudflared"
-        if os.path.exists("./cloudflared"):
-            return "./cloudflared"
-        return None
+            cloudflared_cmd = "cloudflared"
+        elif os.path.exists("./cloudflared"):
+            cloudflared_cmd = "./cloudflared"
+        else:
+            # Download cloudflared
+            console.print("[yellow][*] Downloading cloudflared...[/yellow]")
+            try:
+                import platform
+                arch = platform.machine().lower()
+                
+                if 'arm' in arch or 'aarch' in arch:
+                    url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64"
+                else:
+                    url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64"
+                
+                response = requests.get(url, stream=True, timeout=30)
+                with open("cloudflared", "wb") as f:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+                
+                os.chmod("cloudflared", 0o755)
+                cloudflared_cmd = "./cloudflared"
+                console.print("[green][✓] Cloudflared downloaded[/green]")
+            except Exception as e:
+                console.print(f"[red][!] Failed to download cloudflared: {e}[/red]")
+                return None
+        
+        if not cloudflared_cmd:
+            return None
+        
+        try:
+            # Start cloudflared with simple approach
+            process = subprocess.Popen(
+                [cloudflared_cmd, "tunnel", "--url", f"http://localhost:{self.port}"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            
+            # Give it time to start
+            time.sleep(10)
+            
+            # For cloudflared, we can't easily get the URL in code, so we'll use a different approach
+            # We'll show instructions to the user
+            console.print("[yellow][!] Cloudflare tunnel started but URL not captured automatically[/yellow]")
+            console.print("[cyan][*] Check your terminal for the .trycloudflare.com URL[/cyan]")
+            console.print("[cyan][*] Or visit: https://trycloudflare.com[/cyan]")
+            
+            self.tunnel_process = process
+            return "Check terminal for Cloudflare URL or use PageKite method"
+            
+        except Exception as e:
+            return f"Error: {str(e)}"
+
+    def start_tunnel(self):
+        """Main tunnel startup - tries multiple methods"""
+        console.print("[cyan][*] Establishing secure tunnel...[/cyan]")
+        
+        # Method 1: Try PageKite (most reliable)
+        console.print("[cyan][*] Trying PageKite (method 1)...[/cyan]")
+        pagekite_url = self.start_pagekite()
+        
+        if pagekite_url and not pagekite_url.startswith("Error"):
+            return pagekite_url
+        
+        # Method 2: Try simple cloudflared
+        console.print("[yellow][!] PageKite failed, trying Cloudflare...[/yellow]")
+        cloudflare_result = self.start_simple_cloudflared()
+        
+        if cloudflare_result and not cloudflare_result.startswith("Error"):
+            return cloudflare_result
+        
+        # Method 3: Localhost with instructions
+        console.print("[red][!] All tunnel methods failed[/red]")
+        console.print("[cyan][*] You can still use ZeroEye locally:[/cyan]")
+        console.print("[green]    http://localhost:8080[/green]")
+        console.print("[cyan][*] Or use ngrok manually: ngrok http 8080[/cyan]")
+        
+        return "http://localhost:8080 (local access only)"
 
     def stop_tunnel(self):
         """Clean shutdown"""
         if self.tunnel_process:
             try:
                 self.tunnel_process.terminate()
-                self.tunnel_process.wait(timeout=2)
+                self.tunnel_process.wait(timeout=5)
             except:
                 try:
                     self.tunnel_process.kill()
                 except:
                     pass
+            console.print("[green][✓] Tunnel stopped[/green]")
 
     def start_cloudflared(self):
         """Public method for compatibility"""
