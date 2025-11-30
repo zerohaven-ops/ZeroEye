@@ -16,6 +16,17 @@ fi
 echo -e "\033[1;33m[*] Activating virtual environment...\033[0m"
 source zeroeye_venv/bin/activate
 
+# Verify activation by checking Python path
+VENV_PYTHON=$(which python3)
+if [[ ! "$VENV_PYTHON" == *"zeroeye_venv"* ]]; then
+    echo -e "\033[1;31m[!] Virtual environment activation failed\033[0m"
+    echo -e "\033[1;33m[*] Trying direct Python execution...\033[0m"
+    zeroeye_venv/bin/python3 zeroeye.py
+    exit $?
+fi
+
+echo -e "\033[1;32m[+] Virtual environment activated successfully\033[0m"
+
 # Check if zeroeye.py exists, if not use main.py
 if [ -f "zeroeye.py" ]; then
     echo -e "\033[1;32m[+] Starting ZeroEye...\033[0m"
