@@ -1,3 +1,17 @@
+# Virtual environment
+zeroeye_venv/
+
+# Configuration
+config.json
+captured/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
