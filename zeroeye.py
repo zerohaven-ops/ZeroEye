@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-ZeroEye v2.0 - Main Entry Point
+ZeroEye v2.1.0 - Main Entry Point
 Automatically activates virtual environment and starts the tool
 """
 
