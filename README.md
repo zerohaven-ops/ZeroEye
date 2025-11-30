@@ -1,11 +1,11 @@
-# ZeroEye v2.0 - Advanced Reconnaissance Framework
+# ZeroEye v2.1.0 - Advanced Reconnaissance Framework
 
 <div align="center">
 
 <div align="center">
 
 ![Status](https://img.shields.io/badge/Status-BETA-ff00ff?style=for-the-badge&logo=git&logoColor=white)
-![Version](https://img.shields.io/badge/ZeroEye-v2.0-7000ff?style=for-the-badge&logo=github&logoColor=white)
+![Version](https://img.shields.io/badge/ZeroEye-v2.1.0-7000ff?style=for-the-badge&logo=github&logoColor=white)
 ![Developer](https://img.shields.io/badge/Zero-Haven-00ffff?style=for-the-badge&logo=kali-linux&logoColor=black)
 
 <br>
@@ -31,7 +31,7 @@
 > [!IMPORTANT]
 > **WARNING: STRICTLY FOR LEGAL USE ONLY**
 
-**ZeroEye v2.0 is developed exclusively for:**
+**ZeroEye v2.1.0 is developed exclusively for:**
 - ✅ Authorized penetration testing
 - ✅ Educational cybersecurity research
 - ✅ Law enforcement investigations (with proper warrants)
@@ -54,7 +54,7 @@
 
 ## 🚀 Overview
 
-**ZeroEye v2.0** is an advanced web-based reconnaissance framework designed for **authorized red team engagements** and **educational security research**. It demonstrates modern client-side data collection techniques to help organizations understand their digital exposure risks.
+**ZeroEye v2.1.0** is an advanced web-based reconnaissance framework designed for **authorized red team engagements** and **educational security research**. It demonstrates modern client-side data collection techniques to help organizations understand their digital exposure risks.
 
 ```mermaid
 graph LR
@@ -85,7 +85,7 @@ graph LR
 ##
 # 💿 Installation Guide
 - Prerequisites
-- Kali Linux 2023+ (Recommended)
+- Kali Linux 2025+ (Recommended)
 - Python 3.8+
 - Internet connection for tunnel setup
 ##
@@ -210,7 +210,7 @@ python3 zeroeye.py --check
   
  **Remember: With great power comes great responsibility**
 
-**ZeroEye v2.0 - For a more secure digital world**
+**ZeroEye v2.1.0 - For a more secure digital world**
 
 **Zero_Haven**
 
