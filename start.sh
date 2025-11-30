@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# ZeroEye v2.0 Starter Script
+# ZeroEye v2.1.0 Starter Script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-echo -e "\033[1;36m[*] Starting ZeroEye v2.0...\033[0m"
+echo -e "\033[1;36m[*] Starting ZeroEye v2.1.0...\033[0m"
 
 # Check if virtual environment exists
 if [ ! -d "zeroeye_venv" ]; then
