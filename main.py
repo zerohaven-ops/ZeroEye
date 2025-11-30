@@ -1,5 +1,32 @@
+#!/usr/bin/env python3
+"""
+ZeroEye v2.0 - Main Application
+Professional reconnaissance tool with automated tunneling
+"""
+
 import os
 import sys
+
+# Virtual environment check - ADD THIS AT THE VERY TOP
+def check_environment():
+    """Check if we're running in the correct environment"""
+    venv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "zeroeye_venv")
+    
+    # Check if we're in the virtual environment
+    in_venv = hasattr(sys, 'real_prefix') or (
+        hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix
+    )
+    
+    if not in_venv or not sys.prefix.startswith(venv_path):
+        print("❌ Please run ZeroEye through the start script!")
+        print("💡 Use: ./start.sh")
+        print("💡 Or activate venv manually: source zeroeye_venv/bin/activate")
+        sys.exit(1)
+
+# Run environment check
+check_environment()
+
+# Now import other dependencies
 import json
 import time
 import shutil
@@ -64,7 +91,7 @@ def save_local(filename, data):
     try:
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
         with open(f"captured/{filename}", "a", encoding='utf-8') as f:
-            f.write(f"\n{'='*60}\nTimestamp: {timestamp}\n{'='*60}\n{data}\n\n")
+            f.write(f"\n{'='*60}\nTimestamp: {timestamp}\n{'='=60}\n{data}\n\n")
     except:
         pass
 
