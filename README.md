@@ -2,13 +2,20 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/ZeroEye-v2.0-red?style=for-the-badge&logo=none)
-![Developer](https://img.shields.io/badge/Developer-Zero%20Haven-black?style=for-the-badge&logo=kali-linux&logoColor=white)
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=for-the-badge&logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.104-green?style=for-the-badge&logo=fastapi&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge&logo=open-source-initiative&logoColor=white)
-![Platform](https://img.shields.io/badge/Platform-Kali%20Linux-purple?style=for-the-badge&logo=linux&logoColor=white)
+<div align="center">
 
+![Status](https://img.shields.io/badge/Status-BETA-ff00ff?style=for-the-badge&logo=git&logoColor=white)
+![Version](https://img.shields.io/badge/ZeroEye-v2.0-7000ff?style=for-the-badge&logo=github&logoColor=white)
+![Developer](https://img.shields.io/badge/Zero-Haven-00ffff?style=for-the-badge&logo=kali-linux&logoColor=black)
+
+<br>
+
+![Python](https://img.shields.io/badge/Python-3.8+-2d00f7?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.104-f20089?style=for-the-badge&logo=fastapi&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-89fc00?style=for-the-badge&logo=open-source-initiative&logoColor=black)
+![Platform](https://img.shields.io/badge/Platform-Kali_Linux-ff5400?style=for-the-badge&logo=linux&logoColor=white)
+
+</div>
 <br>
 
 **A next-generation reconnaissance framework for authorized security testing and red team operations**
@@ -65,6 +72,7 @@ graph LR
 - 📍 Geolocation>                High-precision GPS positioning
 - 🌐 Network Intelligence>       WebRTC internal IP discovery
 - 🖥️ System Profiling>           Comprehensive device fingerprinting
+- MANY MORE CAN'T TELL JUST TRY AND ENJOY
 ##
  #  ⚡ Advanced Architecture
 - Self-Hosted: Zero external dependencies
@@ -194,7 +202,14 @@ python3 zeroeye.py --check
 - OWASP Testing Guide
 - Penetration Testing Execution Standard
 - NIST Cybersecurity Framework
-- Responsible Disclosure: Found a vulnerability? Contact
+- Responsible Disclosure: Found a vulnerability? Contact TG:@Zero_Haven
   ##
-# Remember: With great power comes great responsibility
-# ZeroEye v2.0 - For a more secure digital world
+
+<div align="center">
+<br>
+  
+ **Remember: With great power comes great responsibility**
+
+**ZeroEye v2.0 - For a more secure digital world**
+
+</div>
