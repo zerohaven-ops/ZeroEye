@@ -1,5 +1,5 @@
 #!/bin/bash
-# ZeroEye v2.0 - Silent Professional Installer
+# ZeroEye v2.1.0 - Silent Professional Installer
 
 function print_status() {
     echo -e "\033[1;34m[*]\033[0m $1"
@@ -221,3 +221,4 @@ echo -e "   3. Run ZeroEye and configure when prompted"
 echo ""
 echo -e "\033[1;31m⚠️  LEGAL REMINDER: For authorized testing only!\033[0m"
 echo ""
+
