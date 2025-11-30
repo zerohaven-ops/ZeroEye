@@ -39,8 +39,8 @@ class TunnelManager:
             else:  # Windows
                 url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe"
             
-            # Download cloudflared
-            response = requests.get(url, stream=True, timeout=30)
+            # Download cloudflared with timeout
+            response = requests.get(url, stream=True, timeout=15)
             binary_name = "cloudflared.exe" if system == "windows" else "cloudflared"
             
             with open(binary_name, "wb") as f:
@@ -55,7 +55,8 @@ class TunnelManager:
             return binary_name
             
         except Exception as e:
-            console.print(f"[red][!] Cloudflare setup failed: {e}[/red]")
+            console.print(f"[yellow][!] Cloudflare setup failed: {e}[/yellow]")
+            console.print("[cyan][*] Will use alternative tunneling methods[/cyan]")
             return None
 
     def start_cloudflared_tunnel(self):
@@ -63,9 +64,16 @@ class TunnelManager:
         console.print("[cyan][*] Starting worldwide tunnel...[/cyan]")
         
         # Get cloudflared binary
-        cloudflared_cmd = self.install_cloudflared()
+        cloudflared_cmd = None
+        if os.path.exists("cloudflared"):
+            cloudflared_cmd = "./cloudflared"
+        elif os.path.exists("cloudflared.exe"):
+            cloudflared_cmd = "cloudflared.exe"
+        else:
+            cloudflared_cmd = self.install_cloudflared()
+        
         if not cloudflared_cmd:
-            return None, "Failed to setup Cloudflare"
+            return None, "Cloudflare tunnel not available"
         
         try:
             # Start cloudflared tunnel
@@ -115,7 +123,6 @@ class TunnelManager:
                 return process, url
             else:
                 # Even if we can't parse URL, cloudflared might still be working
-                # Provide the trycloudflare.com URL for manual checking
                 console.print("[yellow][!] Tunnel started, checking connectivity...[/yellow]")
                 time.sleep(5)
                 return process, "https://trycloudflare.com (check for your URL)"
@@ -123,9 +130,9 @@ class TunnelManager:
         except Exception as e:
             return None, f"Tunnel error: {str(e)}"
 
-    def start_fallback_tunnel(self):
-        """Fallback tunnel using localhost.run"""
-        console.print("[yellow][!] Primary tunnel failed, starting backup...[/yellow]")
+    def start_localhost_run(self):
+        """Use localhost.run - completely free, no tokens"""
+        console.print("[cyan][*] Starting localhost.run tunnel...[/cyan]")
         
         try:
             # Generate random subdomain
@@ -145,8 +152,8 @@ class TunnelManager:
                 bufsize=1
             )
             
-            console.print("[yellow][*] Backup tunnel starting...[/yellow]")
-            time.sleep(15)
+            console.print("[yellow][*] Starting tunnel (this may take 15-30 seconds)...[/yellow]")
+            time.sleep(20)
             
             # Return predicted URL (more reliable than parsing)
             predicted_url = f"https://{subdomain}.localhost.run"
@@ -163,14 +170,14 @@ class TunnelManager:
         # Method 1: Cloudflare (most reliable worldwide)
         process, url = self.start_cloudflared_tunnel()
         
-        if url and not any(x in str(url).lower() for x in ["error", "failed"]):
+        if url and not any(x in str(url).lower() for x in ["error", "failed", "not available"]):
             self.tunnel_process = process
             self.current_url = url
             return url
         
-        # Method 2: Fallback tunnel
-        console.print("[yellow][!] Retrying with backup tunnel...[/yellow]")
-        process, url = self.start_fallback_tunnel()
+        # Method 2: Fallback tunnel (localhost.run)
+        console.print("[yellow][!] Primary tunnel unavailable, using localhost.run...[/yellow]")
+        process, url = self.start_localhost_run()
         
         if url and not any(x in str(url).lower() for x in ["error", "failed"]):
             self.tunnel_process = process
