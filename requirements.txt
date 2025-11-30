@@ -3,3 +3,4 @@ uvicorn==0.24.0
 rich==13.7.0
 python-multipart==0.0.6
 requests==2.31.0
+cloudflared==2023.10.0
