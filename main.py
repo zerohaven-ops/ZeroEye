@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-ZeroEye v2.0 - Main Application
+ZeroEye v2.1.0 - Main Application
 Professional reconnaissance tool with automated tunneling
 """
 
@@ -242,7 +242,7 @@ def start_wizard():
         f"[yellow]📋 Send this link to your target[/yellow]\n"
         f"[green]✅ Worldwide tunnel active[/green]\n"
         f"[grey50]💡 Works from any country, any network[/grey50]",
-        title="ZeroEye v2.0 - Professional",
+        title="ZeroEye v2.1.0 - Professional",
         border_style="green"
     ))
     
@@ -257,3 +257,4 @@ def start_wizard():
 
 if __name__ == "__main__":
     start_wizard()
+
