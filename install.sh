@@ -1,5 +1,5 @@
 #!/bin/bash
-# ZeroEye v2.1.0 - Silent Professional Installer
+# ZeroEye v2.0 - Silent Professional Installer
 
 function print_status() {
     echo -e "\033[1;34m[*]\033[0m $1"
@@ -11,6 +11,10 @@ function print_success() {
 
 function print_error() {
     echo -e "\033[1;31m[!]\033[0m $1"
+}
+
+function print_warning() {
+    echo -e "\033[1;33m[!]\033[0m $1"
 }
 
 function print_banner() {
@@ -38,7 +42,7 @@ fi
 
 # Check if we're on Kali Linux or Debian-based
 if ! grep -q "Kali GNU/Linux" /etc/os-release 2>/dev/null && ! grep -q "Debian" /etc/os-release 2>/dev/null; then
-    print_error "This installer is optimized for Kali Linux/Debian systems."
+    print_warning "This installer is optimized for Kali Linux/Debian systems."
     print_status "Continuing anyway..."
 fi
 
@@ -50,7 +54,7 @@ sudo apt-get update -qq > /dev/null 2>&1
 if [ $? -eq 0 ]; then
     print_success "Package databases updated"
 else
-    print_error "Failed to update packages - continuing anyway..."
+    print_warning "Failed to update packages - continuing anyway..."
 fi
 
 print_status "Installing system dependencies..."
@@ -58,7 +62,7 @@ sudo apt-get install -y -qq python3 python3-pip python3-venv unzip wget curl ssh
 if [ $? -eq 0 ]; then
     print_success "System dependencies installed"
 else
-    print_error "Some dependencies failed - trying to continue..."
+    print_warning "Some dependencies failed - trying to continue..."
 fi
 
 print_status "Setting up Python virtual environment..."
@@ -90,12 +94,12 @@ if [ -f "requirements.txt" ]; then
     if [ $? -eq 0 ]; then
         print_success "Python dependencies installed"
     else
-        print_error "Failed to install from requirements.txt - installing manually"
+        print_warning "Failed to install from requirements.txt - installing manually"
         pip install -q fastapi uvicorn rich python-multipart requests > /dev/null 2>&1
         print_success "Core Python packages installed"
     fi
 else
-    print_error "requirements.txt not found - installing manually"
+    print_warning "requirements.txt not found - installing manually"
     pip install -q fastapi uvicorn rich python-multipart requests > /dev/null 2>&1
     print_success "Core Python packages installed"
 fi
@@ -109,18 +113,28 @@ else
     exit 1
 fi
 
-print_status "Configuring cloudflared tunnel..."
-if ! command -v cloudflared &> /dev/null; then
-    if wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -O cloudflared; then
-        chmod +x cloudflared
-        print_success "Cloudflared downloaded and configured"
+# NON-BLOCKING CLOUDFLARED INSTALLATION
+print_status "Configuring cloudflared tunnel (non-blocking)..."
+(
+    # Run in background subshell
+    if ! command -v cloudflared &> /dev/null && [ ! -f "cloudflared" ]; then
+        # Try multiple download sources with timeout
+        if timeout 30 wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -O cloudflared 2>/dev/null; then
+            chmod +x cloudflared
+            echo "✅ Cloudflared downloaded successfully"
+        elif timeout 30 wget -q https://github.com/cloudflare/cloudflared/releases/download/2023.10.0/cloudflared-linux-amd64 -O cloudflared 2>/dev/null; then
+            chmod +x cloudflared
+            echo "✅ Cloudflared downloaded (fallback version)"
+        else
+            echo "⚠️  Cloudflared download skipped - will use alternative tunnels"
+        fi
     else
-        print_error "Failed to download cloudflared - manual installation required"
+        echo "✅ Cloudflared already available"
     fi
-else
-    print_success "Cloudflared already installed"
-fi
+) &
+CLOUDFLARED_PID=$!
 
+# Continue with other installations while cloudflared downloads in background
 print_status "Creating directory structure..."
 mkdir -p static captured templates core
 print_success "Directories created"
@@ -165,6 +179,15 @@ EOF
     print_success "Default template created"
 fi
 
+# Wait for cloudflared process to finish (with timeout)
+print_status "Finalizing tunnel setup..."
+wait $CLOUDFLARED_PID 2>/dev/null
+if [ -f "cloudflared" ]; then
+    print_success "Cloudflared tunnel configured"
+else
+    print_warning "Cloudflared not available - will use alternative tunnels"
+fi
+
 # Final verification
 print_status "Running final checks..."
 if [ -d "zeroeye_venv" ] && [ -f "zeroeye_venv/bin/activate" ]; then
@@ -198,4 +221,3 @@ echo -e "   3. Run ZeroEye and configure when prompted"
 echo ""
 echo -e "\033[1;31m⚠️  LEGAL REMINDER: For authorized testing only!\033[0m"
 echo ""
-
